@@ -1,0 +1,6 @@
+{
+  "name": "CineFlix",
+  "description": "A high-performance Netflix clone using TMDB API, featuring movie/TV rows, detailed views, and integrated video players.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
