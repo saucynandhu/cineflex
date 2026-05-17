@@ -1,9 +1,19 @@
 import axios from 'axios';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const BASE_URL = 'https://api.themoviedb.org/3';
 
 const api = axios.create({
-  baseURL: '/api/tmdb',
+  baseURL: BASE_URL,
+});
+
+// Add a request interceptor to attach the API key to every request
+api.interceptors.request.use((config) => {
+  config.params = {
+    ...config.params,
+    api_key: API_KEY,
+  };
+  return config;
 });
 
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/';
