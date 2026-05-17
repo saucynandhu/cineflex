@@ -20,10 +20,19 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   @apply bg-[#141414] text-white antialiased overflow-x-hidden;
+  margin: 0;
 }
 
 /* Custom Scrollbar for non-hidden areas */

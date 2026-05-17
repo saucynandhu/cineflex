@@ -30,20 +30,20 @@ export default function Search() {
   }, [query]);
 
   return (
-    <div className="pt-24 px-4 md:px-12 pb-32 min-h-screen">
-      <div className="flex flex-col gap-2 mb-8">
-        <h1 className="text-xl md:text-2xl text-gray-400">
+    <div className="pt-20 md:pt-24 px-4 md:px-12 pb-32 min-h-screen relative z-0">
+      <div className="flex flex-col gap-1 md:gap-2 mb-6 md:mb-8 relative z-[5]">
+        <h1 className="text-base md:text-2xl text-gray-400">
           Showing results for <span className="text-white font-black italic">"{query}"</span>
         </h1>
         {results.length > 0 && (
-           <p className="text-xs text-gray-600 uppercase tracking-widest font-bold">
+           <p className="text-[10px] md:text-xs text-gray-600 uppercase tracking-widest font-bold">
               Found {results.length} titles matching your search
            </p>
         )}
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-x-4 gap-y-12">
             {[...Array(6)].map((_, i) => (
                 <div key={i} className="aspect-video bg-gray-800 animate-pulse rounded-sm" />
             ))}
@@ -51,7 +51,7 @@ export default function Search() {
       ) : (
         <>
           {results.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-20 overflow-visible">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-x-4 gap-y-12 md:gap-y-20 overflow-visible">
               {results.map((item) => (
                 <MediaCard key={item.id} item={item} />
               ))}

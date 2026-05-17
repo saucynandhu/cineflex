@@ -11,13 +11,14 @@ import Detail from './pages/Detail';
 import Watch from './pages/Watch';
 import Search from './pages/Search';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-[#141414] text-white selection:bg-[#E50914] selection:text-white">
+      <div className="min-h-screen bg-[#141414] text-white selection:bg-[#E50914] selection:text-white flex flex-col">
         <Navbar />
-        <main className="pb-10">
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movies" element={<Movies />} />
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        <Footer />
       </div>
     </BrowserRouter>
   );

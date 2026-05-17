@@ -86,22 +86,24 @@ export default function Watch({ type }: WatchProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Top Bar */}
-      <div className="p-4 md:p-6 bg-[#141414] border-b border-white/5 z-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-3 md:p-6 bg-[#141414] border-b border-white/5 z-50">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors font-bold uppercase tracking-widest text-[10px] md:text-xs"
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors font-bold uppercase tracking-widest text-[10px] md:text-xs min-h-[44px]"
           >
             <ArrowLeft size={16} />
-            Back to Details
+            Back
           </button>
           
-          <SourceSwitcher activeSource={source} onSourceChange={setSource} />
+          <div className="overflow-x-auto no-scrollbar touch-pan-x">
+             <SourceSwitcher activeSource={source} onSourceChange={setSource} />
+          </div>
         </div>
       </div>
 
       {/* Player Iframe */}
-      <div className="flex-1 w-full bg-black relative overflow-hidden">
+      <div className="flex-1 w-full bg-black relative overflow-hidden flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={source}
@@ -109,7 +111,7 @@ export default function Watch({ type }: WatchProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full h-full"
+            className="w-full aspect-video md:h-full md:aspect-auto"
           >
             <iframe
               src={getEmbedUrl()}
@@ -124,8 +126,8 @@ export default function Watch({ type }: WatchProps) {
 
         {isIframeLoading && (
           <div className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-4 z-40">
-            <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
-            <p className="text-gray-400 font-bold tracking-widest text-xs uppercase">Loading Player Source...</p>
+            <Loader2 className="w-10 h-10 md:w-12 md:h-12 text-red-600 animate-spin" />
+            <p className="text-gray-400 font-bold tracking-widest text-[10px] md:text-xs uppercase">Loading Player Source...</p>
           </div>
         )}
       </div>

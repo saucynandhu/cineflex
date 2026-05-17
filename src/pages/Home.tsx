@@ -64,7 +64,7 @@ export default function Home() {
     <div className="relative pb-32">
       <HeroSection movie={heroMovie} />
       
-      <div className="relative -mt-10 md:-mt-32 z-10 transition-all duration-700">
+      <div className="relative -mt-10 md:-mt-32 z-10">
         {sections.map((section, idx) => (
           <MediaRow
             key={section.title + idx}

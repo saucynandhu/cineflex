@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Play, Plus, ChevronDown, ThumbsUp } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
-import { cn } from '../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
 
 interface MediaCardProps {
   item: any;
@@ -12,44 +11,64 @@ interface MediaCardProps {
 
 export default function MediaCard({ item, type }: MediaCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0, width: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const mediaType = type || item.media_type || (item.first_air_date ? 'tv' : 'movie');
+
+  const isTouchDevice = typeof window !== 'undefined' && (window.matchMedia('(hover: none)').matches || window.innerWidth < 768);
 
   const handleClick = () => {
     navigate(`/${mediaType}/${item.id}`);
   };
 
-  return (
-    <div
-      className="relative flex-none w-[160px] sm:w-[200px] md:w-[240px] h-[90px] sm:h-[112px] md:h-[135px] cursor-pointer group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{ zIndex: isHovered ? 100 : 1 }}
-    >
-      <img
-        src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
-        alt={item.title || item.name}
-        className="w-full h-full object-cover rounded-sm shadow-md transition-transform duration-300 group-hover:scale-105"
-      />
+  const handleMouseEnter = () => {
+    if (isTouchDevice) return;
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      setPopupPos({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width
+      });
+      setIsHovered(true);
+    }
+  };
 
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1.05 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-0 left-0 w-full bg-[#181818] rounded-md shadow-2xl overflow-hidden z-[100] origin-bottom"
-          >
-            <div className="relative h-24 sm:h-32">
-              <img
-                src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
-                alt={item.title || item.name}
-                className="w-full h-full object-cover"
-                onClick={handleClick}
-              />
-            </div>
-            
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  return (
+    <>
+      <div
+        ref={cardRef}
+        className="relative flex-none w-[130px] sm:w-[160px] md:w-[220px] h-[73px] sm:h-[90px] md:h-[124px] cursor-pointer group transition-all duration-300"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+      >
+        <img
+          src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
+          alt={item.title || item.name}
+          className="w-full h-full object-cover rounded-sm shadow-md transition-transform duration-300 md:group-hover:scale-105"
+        />
+      </div>
+
+      {!isTouchDevice && isHovered && createPortal(
+        <div
+          className="fixed z-[9999]"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            top: popupPos.top,
+            left: popupPos.left,
+            width: popupPos.width,
+            transformOrigin: 'top center',
+            animation: 'scaleYEntrance 0.2s ease-out forwards'
+          }}
+        >
+          <div className="bg-[#181818] rounded-b-md shadow-2xl overflow-hidden">
             <div className="p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -62,13 +81,16 @@ export default function MediaCard({ item, type }: MediaCardProps) {
                   >
                     <Play size={14} fill="black" className="ml-0.5" />
                   </button>
-                  <button className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors">
+                  <button className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white">
                     <Plus size={14} />
+                  </button>
+                  <button className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white">
+                    <ThumbsUp size={14} />
                   </button>
                 </div>
                 <button 
                   onClick={handleClick}
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white"
                 >
                   <ChevronDown size={14} />
                 </button>
@@ -84,13 +106,21 @@ export default function MediaCard({ item, type }: MediaCardProps) {
                 </span>
               </div>
 
-              <h3 className="text-[10px] md:text-xs font-bold truncate">
+              <h3 className="text-[10px] md:text-xs font-bold truncate text-white">
                 {item.title || item.name}
               </h3>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+          
+          <style>{`
+            @keyframes scaleYEntrance {
+              from { transform: scaleY(0.8); opacity: 0; }
+              to { transform: scaleY(1); opacity: 1; }
+            }
+          `}</style>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
