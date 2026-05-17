@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const TMDB_API_KEY = process.env.VITE_TMDB_API_KEY;
 
 async function startServer() {
   const app = express();

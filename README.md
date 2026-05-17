@@ -6,7 +6,7 @@
 A personal Netflix-style streaming frontend built with Next.js and TMDB. This project provides a sleek, responsive UI for browsing and watching movies and TV shows using third-party embedding services.
 
 ## Screenshots
-*Add screenshots here*
+*Add screenshots here*x
 
 ## Features
 - **Browse Trending & Top Rated**: Explore the latest and greatest in movies and TV shows.
@@ -62,7 +62,7 @@ A personal Netflix-style streaming frontend built with Next.js and TMDB. This pr
 ## Environment Variables
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `NEXT_PUBLIC_TMDB_API_KEY` | Your TMDB API Key for fetching metadata. | Yes |
+| `VITE_TMDB_API_KEY` | Your TMDB API Key for fetching metadata. | Yes |
 
 ## Project Structure
 ```

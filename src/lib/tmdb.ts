@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const api = axios.create({
   baseURL: '/api/tmdb',
