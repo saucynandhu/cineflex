@@ -1,5 +1,6 @@
 {
-  "name": "react-example",
+  "name": "cineflix",
+  "description": "A personal Netflix-style streaming frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",

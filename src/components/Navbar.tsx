@@ -37,7 +37,6 @@ export default function Navbar() {
     { name: 'TV Shows', path: '/tv' },
     { name: 'Movies', path: '/movies' },
     { name: 'New & Popular', path: '/' },
-    { name: 'My List', path: '/' },
   ];
 
   return (
@@ -117,14 +116,6 @@ export default function Navbar() {
                 </button>
               )}
             </AnimatePresence>
-          </div>
-          
-          <span className="hidden sm:inline text-xs md:text-sm font-medium text-gray-300 cursor-pointer hover:text-white">
-            DVD
-          </span>
-          <Bell size={20} className="hidden sm:block cursor-pointer text-white hover:text-gray-300" />
-          <div className="w-8 h-8 md:w-8 md:h-8 rounded-sm bg-blue-500 flex items-center justify-center cursor-pointer overflow-hidden border border-white/10 shrink-0">
-            <User size={20} className="text-white" />
           </div>
         </div>
       </nav>

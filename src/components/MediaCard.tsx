@@ -81,23 +81,10 @@ export default function MediaCard({ item, type }: MediaCardProps) {
                   >
                     <Play size={14} fill="black" className="ml-0.5" />
                   </button>
-                  <button className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white">
-                    <Plus size={14} />
-                  </button>
-                  <button className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white">
-                    <ThumbsUp size={14} />
-                  </button>
                 </div>
-                <button 
-                  onClick={handleClick}
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-500 flex items-center justify-center hover:border-white transition-colors text-white"
-                >
-                  <ChevronDown size={14} />
-                </button>
               </div>
 
               <div className="flex items-center gap-2 text-[10px] md:text-xs font-semibold">
-                <span className="text-green-500">{(item.vote_average * 10).toFixed(0)}% Match</span>
                 <span className="text-gray-400">
                   {item.release_date || item.first_air_date ? (item.release_date || item.first_air_date).split('-')[0] : 'N/A'}
                 </span>

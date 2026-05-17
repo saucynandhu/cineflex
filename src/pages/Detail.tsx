@@ -81,7 +81,6 @@ export default function Detail({ type }: DetailProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs md:text-base font-semibold">
-            <span className="text-green-500">{(data.vote_average * 10).toFixed(0)}% Match</span>
             <div className="flex items-center gap-1">
                <Calendar size={14} className="md:w-4 md:h-4" />
                <span>{(data.release_date || data.first_air_date || '').split('-')[0]}</span>
@@ -109,14 +108,6 @@ export default function Detail({ type }: DetailProps) {
               <Play size={20} className="md:w-6 md:h-6" fill="black" />
               Watch Now
             </button>
-            <div className="flex items-center justify-center gap-3">
-              <button className="w-11 h-11 md:w-12 md:h-12 rounded-full border-2 border-gray-400 flex items-center justify-center hover:border-white transition-all">
-                <Plus size={20} className="md:w-6 md:h-6" />
-              </button>
-              <button className="w-11 h-11 md:w-12 md:h-12 rounded-full border-2 border-gray-400 flex items-center justify-center hover:border-white transition-all">
-                <ThumbsUp size={20} className="md:w-6 md:h-6" />
-              </button>
-            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 pt-2 md:pt-4">
