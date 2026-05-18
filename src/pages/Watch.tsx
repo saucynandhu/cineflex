@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as tmdb from '../lib/tmdb';
 import SourceSwitcher, { SourceId } from '../components/SourceSwitcher';
+import { useUserLists } from '../hooks/useUserLists';
 
 interface WatchProps {
   type: 'movie' | 'tv';
@@ -21,25 +22,61 @@ export default function Watch({ type }: WatchProps) {
   const [tvDetails, setTvDetails] = useState<any>(null);
   const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<any[]>([]);
 
+  const { addToContinueWatching, addToWatched } = useUserLists();
+
   useEffect(() => {
-    async function fetchExternalIds() {
+    async function fetchDetailsAndRecordActivity() {
       if (!id) return;
       try {
-        const data = await tmdb.getExternalIds(type, id);
-        setImdbId(data.imdb_id);
+        const [externalIds, details] = await Promise.all([
+          tmdb.getExternalIds(type, id),
+          tmdb.getDetails(type, id)
+        ]);
+        
+        setImdbId(externalIds.imdb_id);
         
         if (type === 'tv') {
-          const details = await tmdb.getDetails('tv', id);
           setTvDetails(details);
         }
+
+        // Record activity
+        const commonData = {
+          id: details.id,
+          tmdbId: details.id,
+          imdbId: externalIds.imdb_id,
+          type,
+          title: details.title || details.name,
+          posterPath: details.poster_path,
+          backdropPath: details.backdrop_path,
+          year: (details.release_date || details.first_air_date || '').split('-')[0],
+        };
+
+        addToWatched({
+          ...commonData,
+          watchedAt: Date.now(),
+          season: type === 'tv' ? Number(season) : undefined,
+          episode: type === 'tv' ? Number(episode) : undefined,
+          addedAt: Date.now()
+        });
+
+        addToContinueWatching({
+          ...commonData,
+          progress: 0,
+          watchedAt: Date.now(),
+          season: type === 'tv' ? Number(season) : undefined,
+          episode: type === 'tv' ? Number(episode) : undefined,
+          episodeName: type === 'tv' ? details.name : undefined, // Placeholder for actual episode name if needed
+          addedAt: Date.now()
+        });
+
       } catch (err) {
         console.error('Failed to fetch media info:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchExternalIds();
-  }, [id, type]);
+    fetchDetailsAndRecordActivity();
+  }, [id, type, season, episode, addToContinueWatching, addToWatched]);
 
   useEffect(() => {
     async function fetchSeasonData() {
