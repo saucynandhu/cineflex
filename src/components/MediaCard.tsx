@@ -18,21 +18,40 @@ export default function MediaCard({ item, type }: MediaCardProps) {
 
   const isTouchDevice = typeof window !== 'undefined' && (window.matchMedia('(hover: none)').matches || window.innerWidth < 768);
 
+  useEffect(() => {
+    if (!isHovered || isTouchDevice) return;
+
+    let frameId: number;
+    const updatePosition = () => {
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        
+        // Hide popup if card scrolls out of viewport
+        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+          setIsHovered(false);
+          return;
+        }
+
+        setPopupPos({
+          top: rect.bottom,
+          left: rect.left,
+          width: rect.width
+        });
+      }
+      frameId = requestAnimationFrame(updatePosition);
+    };
+
+    frameId = requestAnimationFrame(updatePosition);
+    return () => cancelAnimationFrame(frameId);
+  }, [isHovered, isTouchDevice]);
+
   const handleClick = () => {
     navigate(`/${mediaType}/${item.id}`);
   };
 
   const handleMouseEnter = () => {
     if (isTouchDevice) return;
-    if (cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect();
-      setPopupPos({
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width
-      });
-      setIsHovered(true);
-    }
+    setIsHovered(true);
   };
 
   const handleMouseLeave = () => {
