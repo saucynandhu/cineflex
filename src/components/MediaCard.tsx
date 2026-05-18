@@ -12,7 +12,7 @@ interface MediaCardProps {
 export default function MediaCard({ item, type }: MediaCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [popupPos, setPopupPos] = useState({ top: 0, left: 0, width: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLImageElement>(null);
   const navigate = useNavigate();
   const mediaType = type || item.media_type || (item.first_air_date ? 'tv' : 'movie');
 
@@ -61,13 +61,13 @@ export default function MediaCard({ item, type }: MediaCardProps) {
   return (
     <>
       <div
-        ref={cardRef}
         className="relative flex-none w-[130px] sm:w-[160px] md:w-[220px] h-[73px] sm:h-[90px] md:h-[124px] cursor-pointer group transition-all duration-300"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
       >
         <img
+          ref={cardRef}
           src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
           alt={item.title || item.name}
           className="w-full h-full object-cover rounded-sm shadow-md transition-transform duration-300 md:group-hover:scale-105"
