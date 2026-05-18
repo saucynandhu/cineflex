@@ -6,7 +6,26 @@
 A personal Netflix-style streaming frontend built with Next.js and TMDB. This project provides a sleek, responsive UI for browsing and watching movies and TV shows using third-party embedding services.
 
 ## Screenshots
-*Add screenshots here*x
+
+### Desktop View
+![CineFlix Homepage](./screenshots/desktop-home.png)
+*Main homepage featuring trending content with hero section and media grid*
+
+![CineFlix Detail Page](./screenshots/desktop-detail.png)
+*Detailed media page with cast information and episode listings*
+
+![CineFlix Watch Page](./screenshots/desktop-watch.png)
+*Video player with source switcher for multiple streaming providers*
+
+### Mobile View
+![CineFlix Mobile Home](./screenshots/mobile-home.png)
+*Responsive mobile version of the homepage*
+
+![CineFlix Mobile Menu](./screenshots/mobile-menu.png)
+*Mobile navigation menu with all available routes*
+
+![CineFlix Mobile Trending](./screenshots/mobile-trending.png)
+*Mobile view showcasing trending movies and TV shows*
 
 ## Features
 - **Browse Trending & Top Rated**: Explore the latest and greatest in movies and TV shows.
