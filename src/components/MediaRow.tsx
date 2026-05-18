@@ -6,9 +6,11 @@ interface MediaRowProps {
   title: string;
   items: any[];
   type?: 'movie' | 'tv' | 'all';
+  listType?: 'continue_watching' | 'watch_later' | 'watched';
+  onRemove?: (id: number, type: string) => void;
 }
 
-const MediaRow: FC<MediaRowProps> = ({ title, items, type }) => {
+const MediaRow: FC<MediaRowProps> = ({ title, items, type, listType, onRemove }) => {
   const rowRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -42,8 +44,8 @@ const MediaRow: FC<MediaRowProps> = ({ title, items, type }) => {
             className="flex items-center gap-2 md:gap-3 overflow-x-auto overflow-y-visible scrollbar-hide snap-x scroll-smooth pb-4 touch-pan-x"
           >
             {items.map((item) => (
-              <div key={item.id} className="snap-start overflow-visible py-1">
-                <MediaCard item={item} type={type} />
+              <div key={`${item.tmdbId || item.id}-${item.type || type}`} className="snap-start overflow-visible py-1">
+                <MediaCard item={item} type={type} listType={listType} onRemove={onRemove} />
               </div>
             ))}
           </div>

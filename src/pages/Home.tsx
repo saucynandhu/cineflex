@@ -2,11 +2,44 @@ import { useState, useEffect } from 'react';
 import HeroSection from '../components/HeroSection';
 import MediaRow from '../components/MediaRow';
 import * as tmdb from '../lib/tmdb';
+import { useUserLists } from '../hooks/useUserLists';
 
 export default function Home() {
   const [heroMovie, setHeroMovie] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { continueWatching, watchLater, removeFromContinueWatching, removeFromWatchLater } = useUserLists();
+  const [cwItems, setCwItems] = useState<any[]>([]);
+  const [wlItems, setWlItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    setCwItems(continueWatching);
+  }, [continueWatching]);
+
+  useEffect(() => {
+    setWlItems(watchLater);
+  }, [watchLater]);
+
+  const handleCWRemove = (tmdbId: number, type: string) => {
+    removeFromContinueWatching(tmdbId, type as 'movie' | 'tv');
+    setCwItems(prev => prev.filter(
+      item => !(
+        (Number(item.tmdbId) === Number(tmdbId) || Number(item.id) === Number(tmdbId)) 
+        && item.type === type
+      )
+    ));
+  };
+
+  const handleWLRemove = (tmdbId: number, type: string) => {
+    removeFromWatchLater(tmdbId, type as 'movie' | 'tv');
+    setWlItems(prev => prev.filter(
+      item => !(
+        (Number(item.tmdbId) === Number(tmdbId) || Number(item.id) === Number(tmdbId)) 
+        && item.type === type
+      )
+    ));
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -64,7 +97,17 @@ export default function Home() {
     <div className="relative pb-32">
       <HeroSection movie={heroMovie} />
       
-      <div className="relative -mt-10 md:-mt-32 z-10">
+      <div className="relative -mt-10 md:-mt-32 z-10 space-y-4 md:space-y-0">
+        {cwItems.length > 0 && (
+          <MediaRow
+            title="Continue Watching"
+            items={cwItems}
+            type="all"
+            listType="continue_watching"
+            onRemove={handleCWRemove}
+          />
+        )}
+
         {sections.map((section, idx) => (
           <MediaRow
             key={section.title + idx}

@@ -36,6 +36,8 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'TV Shows', path: '/tv' },
     { name: 'Movies', path: '/movies' },
+    { name: 'My List', path: '/my-list' },
+    { name: 'Watched', path: '/watched' },
   ];
 
   return (

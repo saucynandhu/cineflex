@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
-import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2 } from 'lucide-react';
+import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
 import MediaRow from '../components/MediaRow';
+import { useUserLists } from '../hooks/useUserLists';
 
 interface DetailProps {
   type: 'movie' | 'tv';
@@ -18,6 +19,8 @@ export default function Detail({ type }: DetailProps) {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [episodesLoading, setEpisodesLoading] = useState(false);
+
+  const { isInWatchLater, toggleWatchLater } = useUserLists();
 
   useEffect(() => {
     async function fetchDetails() {
@@ -115,6 +118,27 @@ export default function Detail({ type }: DetailProps) {
             >
               <Play size={20} className="md:w-6 md:h-6" fill="black" />
               Watch Now
+            </button>
+
+            <button
+              onClick={() => toggleWatchLater({
+                id: data.id,
+                tmdbId: data.id,
+                type,
+                title: data.title || data.name,
+                posterPath: data.poster_path,
+                backdropPath: data.backdrop_path,
+                year: (data.release_date || data.first_air_date || '').split('-')[0],
+                addedAt: Date.now()
+              })}
+              className="flex items-center justify-center gap-2 bg-[#333]/80 text-white px-6 md:px-8 py-3 rounded-md hover:bg-[#333] transition-all font-bold text-base md:text-lg min-h-[44px]"
+            >
+              {isInWatchLater(data.id, type) ? (
+                <BookmarkCheck size={20} className="md:w-6 md:h-6" fill="white" />
+              ) : (
+                <Bookmark size={20} className="md:w-6 md:h-6" />
+              )}
+              My List
             </button>
           </div>
 
