@@ -75,7 +75,11 @@ export default function MediaCard({ item, type }: MediaCardProps) {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/watch/${mediaType}/${item.id}`);
+                      if (mediaType === 'tv') {
+                        navigate(`/watch/tv/${item.id}/1/1`);
+                      } else {
+                        navigate(`/watch/movie/${item.id}`);
+                      }
                     }}
                     className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-200 transition-colors"
                   >

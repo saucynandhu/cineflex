@@ -32,27 +32,18 @@ interface SourceSwitcherProps {
 export default function SourceSwitcher({ activeSource, onSourceChange }: SourceSwitcherProps) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-        <div className="flex items-center gap-2 flex-nowrap md:flex-wrap">
-          {SOURCES.map((source) => {
-            const isActive = activeSource === source.id;
-            
-            return (
-              <button
-                key={source.id}
-                onClick={() => onSourceChange(source.id)}
-                className={cn(
-                  "px-5 py-2 rounded-full font-bold text-sm transition-all whitespace-nowrap border-2",
-                  isActive 
-                    ? "bg-[#E50914] border-[#E50914] text-white shadow-lg" 
-                    : "bg-black/40 border-transparent text-gray-400 hover:text-white hover:border-[#E50914]"
-                )}
-              >
-                {source.name}
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex items-center gap-2">
+        <select
+          value={activeSource}
+          onChange={(e) => onSourceChange(e.target.value as SourceId)}
+          className="bg-[#1a1a1a] text-white border-2 border-[#E50914] rounded px-3 py-2 outline-none cursor-pointer font-bold text-sm w-full md:w-auto"
+        >
+          {SOURCES.map((source) => (
+            <option key={source.id} value={source.id}>
+              {source.name}
+            </option>
+          ))}
+        </select>
       </div>
       
       <p className="text-[11px] text-gray-400 font-medium">

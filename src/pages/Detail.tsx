@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
-import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar } from 'lucide-react';
+import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2 } from 'lucide-react';
 import MediaRow from '../components/MediaRow';
 
 interface DetailProps {
@@ -17,6 +17,7 @@ export default function Detail({ type }: DetailProps) {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -40,8 +41,15 @@ export default function Detail({ type }: DetailProps) {
   useEffect(() => {
     async function fetchEpisodes() {
       if (type === 'tv' && id) {
-        const eps = await tmdb.getEpisodes(id, selectedSeason);
-        setEpisodes(eps);
+        setEpisodesLoading(true);
+        try {
+          const eps = await tmdb.getEpisodes(id, selectedSeason);
+          setEpisodes(eps);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setEpisodesLoading(false);
+        }
       }
     }
     fetchEpisodes();
@@ -159,7 +167,14 @@ export default function Detail({ type }: DetailProps) {
               </select>
             </div>
             
-            <div className="grid gap-4">
+            <div className="grid gap-4 min-h-[200px] relative">
+               {episodesLoading ? (
+                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#141414]/50 z-10 rounded-md">
+                   <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
+                   <p className="text-gray-400 font-medium">Fetching episodes...</p>
+                 </div>
+               ) : null}
+
                {episodes.map((ep) => (
                  <div 
                   key={ep.id} 
@@ -180,9 +195,23 @@ export default function Detail({ type }: DetailProps) {
                       </span>
                       <span className="absolute top-2 left-2 text-3xl font-black text-white/50">{ep.episode_number}</span>
                    </div>
-                   <div className="flex flex-col gap-2 pt-2">
-                      <h4 className="font-bold text-lg text-white group-hover:text-red-500 transition-colors uppercase tracking-tight">{ep.name}</h4>
-                      <p className="text-gray-400 text-sm line-clamp-2 md:line-clamp-3 leading-relaxed">{ep.overview}</p>
+                   <div className="flex flex-col gap-2 pt-2 flex-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <h4 className="font-bold text-lg text-white group-hover:text-red-500 transition-colors uppercase tracking-tight">
+                          E{ep.episode_number} - {ep.name}
+                        </h4>
+                        <span className="text-gray-500 text-xs md:text-sm font-medium flex items-center gap-1">
+                          <Calendar size={12} />
+                          {ep.air_date}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                        {ep.overview || "No description available."}
+                      </p>
+                      <button className="mt-2 flex items-center gap-2 bg-[#E50914] text-white px-4 py-1.5 rounded text-sm font-bold w-fit opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <Play size={14} fill="white" />
+                        Play
+                      </button>
                    </div>
                  </div>
                ))}
