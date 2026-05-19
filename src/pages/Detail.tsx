@@ -81,8 +81,13 @@ export default function Detail({ type }: DetailProps) {
 
   if (loading || !data) return <div className="pt-24 px-12 h-screen bg-[#141414]">Loading...</div>;
 
-  const trailers = data.videos?.results?.filter((v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || [];
-  const mainTrailer = trailers[0];
+  // Trailer selection logic
+  const videos = data.videos?.results || [];
+  const officialTrailer = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer' && v.official === true);
+  const anyTrailer = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer');
+  const officialTeaser = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Teaser' && v.official === true);
+  
+  const selectedVideo = officialTrailer || anyTrailer || officialTeaser || null;
 
   const handlePlay = () => {
     if (type === 'movie') {
@@ -152,18 +157,24 @@ export default function Detail({ type }: DetailProps) {
             </div>
           )}
 
-          <div className="flex items-center gap-3">
-            <button onClick={handlePlay} className="flex-1 md:flex-none bg-[#E50914] text-white px-10 py-3 rounded font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible">
+            <button 
+              onClick={handlePlay} 
+              className="flex-1 sm:flex-none bg-[#E50914] text-white px-10 py-3 rounded font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            >
               <Play size={20} fill="white" /> Watch Now
             </button>
             <button 
               onClick={() => toggleWatchLater({ id: data.id, tmdbId: data.id, type, title: data.title || data.name, posterPath: data.poster_path, backdropPath: data.backdrop_path, year: (data.release_date || data.first_air_date || '').split('-')[0], addedAt: Date.now() })}
-              className={cn("px-10 py-3 rounded font-bold transition-all border flex items-center justify-center gap-2", isInWatchLater(data.id, type) ? "bg-white text-black border-white" : "text-white border-white/50 hover:border-white")}
+              className={cn("flex-1 sm:flex-none px-10 py-3 rounded font-bold transition-all border flex items-center justify-center gap-2", isInWatchLater(data.id, type) ? "bg-white text-black border-white" : "text-white border-white/50 hover:border-white")}
             >
               {isInWatchLater(data.id, type) ? <Check size={20} /> : <Plus size={20} />} My List
             </button>
-            {mainTrailer && (
-              <button onClick={() => setActiveTrailer(mainTrailer.key)} className="hidden md:flex border border-white/50 text-white px-6 py-3 rounded font-bold hover:border-white transition-all items-center gap-2">
+            {selectedVideo && (
+              <button 
+                onClick={() => setActiveTrailer(selectedVideo.key)} 
+                className="flex-1 sm:flex-none border border-white/50 text-white px-6 py-3 rounded font-bold hover:border-white transition-all flex items-center justify-center gap-2"
+              >
                 <Film size={20} /> Trailer
               </button>
             )}
