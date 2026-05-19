@@ -1,14 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
-import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2, Bookmark, BookmarkCheck, X, Film } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import MediaRow from '../components/MediaRow';
 import { useUserLists } from '../hooks/useUserLists';
 
 interface DetailProps {
   type: 'movie' | 'tv';
 }
+
+const StarRating = ({ rating }: { rating: number }) => {
+  const filledStars = (rating / 10) * 5;
+  
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => {
+        const fillAmount = Math.max(0, Math.min(1, filledStars - i));
+        return (
+          <div key={i} className="relative w-[18px] h-[18px]">
+            <Star size={18} className="text-[#333333] absolute inset-0" fill="#333333" />
+            <div 
+              className="absolute inset-0 overflow-hidden" 
+              style={{ width: `${fillAmount * 100}%` }}
+            >
+              <Star size={18} className="text-[#E50914]" fill="#E50914" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default function Detail({ type }: DetailProps) {
   const { id } = useParams();
@@ -19,6 +43,7 @@ export default function Detail({ type }: DetailProps) {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [activeTrailer, setActiveTrailer] = useState<string | null>(null);
 
   const { isInWatchLater, toggleWatchLater } = useUserLists();
 
@@ -58,8 +83,26 @@ export default function Detail({ type }: DetailProps) {
     fetchEpisodes();
   }, [id, type, selectedSeason]);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setActiveTrailer(null);
+  }, []);
+
+  useEffect(() => {
+    if (activeTrailer) {
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      window.removeEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTrailer, handleKeyDown]);
+
   if (loading) return <div className="pt-24 px-12">Loading details...</div>;
   if (!data) return <div className="pt-24 px-12">Not found.</div>;
+
+  const trailers = data.videos?.results?.filter(
+    (v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+  ) || [];
+  const mainTrailer = trailers[0];
 
   const handlePlay = () => {
     if (type === 'movie') {
@@ -120,6 +163,16 @@ export default function Detail({ type }: DetailProps) {
               Watch Now
             </button>
 
+            {mainTrailer && (
+              <button
+                onClick={() => setActiveTrailer(mainTrailer.key)}
+                className="flex items-center justify-center gap-2 bg-transparent text-white border-2 border-white px-6 md:px-8 py-3 rounded-full hover:bg-white/10 transition-all font-bold text-base md:text-lg min-h-[44px]"
+              >
+                <Play size={20} className="md:w-6 md:h-6" />
+                Watch Trailer
+              </button>
+            )}
+
             <button
               onClick={() => toggleWatchLater({
                 id: data.id,
@@ -142,12 +195,44 @@ export default function Detail({ type }: DetailProps) {
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-2 md:pt-4">
-            {data.genres.map((genre: any) => (
-              <span key={genre.id} className="text-[10px] md:text-xs bg-gray-800 px-2 md:px-3 py-1 rounded-full text-gray-300">
-                {genre.name}
-              </span>
-            ))}
+          <div className="flex flex-col gap-3 pt-2 md:pt-4">
+            <div className="flex flex-wrap gap-2">
+              {data.genres.map((genre: any) => (
+                <span key={genre.id} className="text-[10px] md:text-xs bg-gray-800 px-2 md:px-3 py-1 rounded-full text-gray-300 font-medium">
+                  {genre.name}
+                </span>
+              ))}
+            </div>
+
+            {/* Ratings Block */}
+            <div className="border-t border-b border-[#333] py-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mt-2">
+              <div className="flex items-center gap-4">
+                <StarRating rating={data.vote_average} />
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white leading-none">
+                    {data.vote_average.toFixed(1)}
+                  </span>
+                  <span className="text-lg text-[#808080]">/ 10</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-sm italic text-[#808080]">
+                  ({data.vote_count.toLocaleString()} ratings)
+                </span>
+
+                {data.popularity > 100 && (
+                  <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-red-600/20 text-red-500 font-bold flex items-center gap-1">
+                    🔥 Trending
+                  </span>
+                )}
+                {data.popularity <= 100 && data.popularity > 50 && (
+                  <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 font-bold">
+                    Popular
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -243,9 +328,80 @@ export default function Detail({ type }: DetailProps) {
           </section>
         )}
 
+        {/* Trailers Section */}
+        {trailers.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Film size={24} className="text-red-600" />
+              <h2 className="text-xl md:text-2xl font-bold italic uppercase tracking-tighter">Trailers & Teasers</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {trailers.map((trailer: any) => (
+                <div 
+                  key={trailer.id}
+                  onClick={() => setActiveTrailer(trailer.key)}
+                  className="group cursor-pointer space-y-2"
+                >
+                  <div className="relative aspect-video rounded-md overflow-hidden shadow-lg border border-white/5">
+                    <img 
+                      src={`https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg`}
+                      alt={trailer.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+                        <Play size={24} fill="white" className="ml-1 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs md:text-sm font-bold text-gray-300 line-clamp-1 group-hover:text-white transition-colors uppercase tracking-tight">
+                    {trailer.name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <MediaRow title="Recommendations" items={data.recommendations?.results} type={type} />
         <MediaRow title="More Like This" items={data.similar?.results} type={type} />
       </div>
+
+      {/* Trailer Modal */}
+      <AnimatePresence>
+        {activeTrailer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveTrailer(null)}
+            className="fixed inset-0 z-[1000] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-[1000px] aspect-video bg-black shadow-2xl rounded-lg overflow-hidden border border-white/10"
+            >
+              <button
+                onClick={() => setActiveTrailer(null)}
+                className="absolute top-2 right-2 md:-top-12 md:-right-12 z-[1001] w-10 h-10 rounded-full bg-black/50 md:bg-transparent flex items-center justify-center text-white hover:bg-red-600 transition-all group"
+              >
+                <X size={24} className="group-hover:scale-110 transition-transform" />
+              </button>
+              
+              <iframe
+                src={`https://www.youtube.com/embed/${activeTrailer}?autoplay=1`}
+                className="w-full h-full"
+                allow="autoplay; fullscreen"
+                title="Trailer"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
