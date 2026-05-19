@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Play, Plus, ChevronDown, ThumbsUp, Bookmark, BookmarkCheck, Check, X } from 'lucide-react';
+import { Play, Plus, ThumbsUp, ChevronDown, Bookmark, BookmarkCheck, Check, X, Info } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
+import { cn } from '../lib/utils';
 
 interface MediaCardProps {
   item: any;
@@ -49,14 +50,13 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
       if (cardRef.current) {
         const rect = cardRef.current.getBoundingClientRect();
         
-        // Hide popup if card scrolls out of viewport
         if (rect.bottom < 0 || rect.top > window.innerHeight) {
           setIsHovered(false);
           return;
         }
 
         setPopupPos({
-          top: rect.bottom,
+          top: rect.top,
           left: rect.left,
           width: rect.width
         });
@@ -69,85 +69,90 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   }, [isHovered, isTouchDevice]);
 
   const handleClick = () => {
-    navigate(`/${mediaType}/${item.id}`);
-  };
-
-  const handleMouseEnter = () => {
-    if (isTouchDevice) return;
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
+    navigate(`/${mediaType}/${item.id || item.tmdbId}`);
   };
 
   return (
     <>
       <div
-        className="relative flex-none w-[130px] sm:w-[160px] md:w-[220px] h-[73px] sm:h-[90px] md:h-[124px] cursor-pointer group transition-all duration-300"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        className="relative flex-none w-[160px] sm:w-[200px] md:w-[240px] aspect-video cursor-pointer transition-all duration-300 group/card"
+        onMouseEnter={() => !isTouchDevice && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         onClick={handleClick}
       >
         <img
           ref={cardRef}
           src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
           alt={item.title || item.name}
-          className="w-full h-full object-cover rounded-sm shadow-md transition-transform duration-300 md:group-hover:scale-105"
+          className="w-full h-full object-cover rounded-sm shadow-md"
         />
-        {isWatched(item.tmdbId || item.id, mediaType) && (
-          <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-1 z-20">
-            <Check size={10} className="text-green-500" />
-            <span className="text-[8px] font-bold text-white uppercase">Watched</span>
+        
+        {/* Continue Watching Label */}
+        {listType === 'continue_watching' && item.type === 'tv' && item.season && item.episode && (
+          <div className="absolute bottom-2 left-2 text-[10px] md:text-xs font-medium text-white drop-shadow-lg">
+            S{item.season}:E{item.episode}
           </div>
         )}
-        {item.season && item.episode && (
-          <div className="absolute bottom-1 left-1 bg-[#E50914] px-1.5 py-0.5 rounded text-[8px] font-black text-white shadow-lg z-20">
-            S{item.season} E{item.episode}
+
+        {/* Progress Bar (Continue Watching) */}
+        {listType === 'continue_watching' && (
+          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/30">
+            <div 
+              className="h-full bg-[#E50914]" 
+              style={{ width: `${item.progress || 30}%` }} 
+            />
           </div>
         )}
-        {(listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
+
+        {/* List Page Remove Button */}
+        {(listType === 'watch_later' || listType === 'watched') && (
           <button
             onClick={handleRemove}
-            className="absolute top-2 right-2 w-6 h-6 bg-black/70 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-[#E50914] transition-all z-30 opacity-0 group-hover:opacity-100"
-            title="Remove"
+            className="absolute top-2 right-2 w-6 h-6 bg-black/70 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all opacity-0 group-hover/card:opacity-100"
           >
-            <X size={14} strokeWidth={3} />
+            <X size={14} />
           </button>
         )}
       </div>
 
+      {/* Hover Portal */}
       {!isTouchDevice && isHovered && createPortal(
         <div
-          className="fixed z-[9999]"
+          className="fixed z-[9999] transition-all duration-300"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           style={{
-            top: popupPos.top,
-            left: popupPos.left,
-            width: popupPos.width,
-            transformOrigin: 'top center',
-            animation: 'scaleYEntrance 0.2s ease-out forwards'
+            top: popupPos.top - 50,
+            left: popupPos.left - 20,
+            width: popupPos.width + 40,
+            transformOrigin: 'center center',
           }}
         >
-          <div className="bg-[#181818] rounded-b-md shadow-2xl overflow-hidden">
-            <div className="p-3 space-y-2">
+          <div className="bg-[#181818] rounded-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="aspect-video w-full relative">
+              <img
+                src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
+                alt={item.title || item.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-transparent" />
+            </div>
+
+            <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       if (mediaType === 'tv') {
-                        const s = item.season || 1;
-                        const ep = item.episode || 1;
-                        navigate(`/watch/tv/${item.tmdbId || item.id}/${s}/${ep}`);
+                        navigate(`/watch/tv/${item.tmdbId || item.id}/${item.season || 1}/${item.episode || 1}`);
                       } else {
                         navigate(`/watch/movie/${item.tmdbId || item.id}`);
                       }
                     }}
-                    className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-200 transition-colors"
+                    className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition-colors"
                   >
-                    <Play size={14} fill="black" className="ml-0.5" />
+                    <Play size={18} fill="black" className="ml-0.5" />
                   </button>
                   <button 
                     onClick={(e) => {
@@ -163,38 +168,29 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
                         addedAt: Date.now()
                       });
                     }}
-                    className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#333] border border-gray-600 flex items-center justify-center hover:border-white transition-colors"
+                    className="w-8 h-8 rounded-full border-2 border-white/50 flex items-center justify-center hover:border-white transition-colors"
                   >
-                    {isInWatchLater(item.tmdbId || item.id, mediaType) ? (
-                      <BookmarkCheck size={14} fill="white" />
-                    ) : (
-                      <Bookmark size={14} />
-                    )}
+                    {isInWatchLater(item.tmdbId || item.id, mediaType) ? <Check size={18} /> : <Plus size={18} />}
                   </button>
                 </div>
+                <button 
+                  onClick={() => navigate(`/${mediaType}/${item.tmdbId || item.id}`)}
+                  className="w-8 h-8 rounded-full border-2 border-white/50 flex items-center justify-center hover:border-white transition-colors"
+                >
+                  <ChevronDown size={18} />
+                </button>
               </div>
 
-              <div className="flex items-center gap-2 text-[10px] md:text-xs font-semibold">
-                <span className="text-gray-400">
-                  {item.release_date || item.first_air_date ? (item.release_date || item.first_air_date).split('-')[0] : 'N/A'}
-                </span>
-                <span className="uppercase text-[8px] text-gray-300 border border-gray-500 px-1">
-                  HD
-                </span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold">
+                  <span className="text-green-500">98% Match</span>
+                  <span className="text-white">{(item.release_date || item.first_air_date || item.year || '').split('-')[0]}</span>
+                  <span className="border border-white/40 px-1 text-[8px] uppercase">HD</span>
+                </div>
+                <h3 className="text-sm font-bold text-white truncate">{item.title || item.name}</h3>
               </div>
-
-              <h3 className="text-[10px] md:text-xs font-bold truncate text-white">
-                {item.title || item.name}
-              </h3>
             </div>
           </div>
-          
-          <style>{`
-            @keyframes scaleYEntrance {
-              from { transform: scaleY(0.8); opacity: 0; }
-              to { transform: scaleY(1); opacity: 1; }
-            }
-          `}</style>
         </div>,
         document.body
       )}

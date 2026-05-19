@@ -1,122 +1,108 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, User, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Bookmark, Menu, X } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'TV Shows', path: '/tv' },
+    { name: 'Movies', path: '/movies' },
+  ];
 
-  const handleSearchSubmit = (e: FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'TV Shows', path: '/tv' },
-    { name: 'Movies', path: '/movies' },
-    { name: 'My List', path: '/my-list' },
-    { name: 'Watched', path: '/watched' },
-  ];
-
   return (
     <>
       <nav
         className={cn(
-          'fixed top-0 z-50 w-full transition-colors duration-300 ease-in-out px-4 md:px-12 py-3 md:py-4 flex items-center justify-between',
-          isScrolled || isMobileMenuOpen ? 'bg-[#141414]/95 backdrop-blur-md shadow-lg' : 'bg-gradient-to-b from-black/80 to-transparent'
+          'fixed top-0 w-full z-50 transition-all duration-300 px-4 md:px-12 py-3 flex items-center justify-between',
+          isScrolled ? 'bg-[#141414] shadow-[0_2px_4px_rgba(0,0,0,0.5)]' : 'bg-transparent'
         )}
       >
-        <div className="flex items-center gap-4 md:gap-8">
-          <button 
-            className="md:hidden text-white hover:text-gray-300 transition-colors p-1"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
-          <Link to="/" className="flex items-center">
-            <span className="text-[#E50914] text-xl md:text-3xl font-black tracking-tighter uppercase italic">
-              Cineflix
-            </span>
+        <div className="flex items-center gap-6 md:gap-10">
+          <Link to="/" className="text-[#E50914] text-2xl font-black tracking-tighter uppercase">
+            Cineflix
           </Link>
-          
-          <div className="hidden lg:flex items-center gap-6 text-sm font-medium">
+
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
-                key={link.name}
+                key={link.path}
                 to={link.path}
                 className={cn(
-                  'hover:text-gray-300 transition-colors whitespace-nowrap',
-                  location.pathname === link.path ? 'text-white' : 'text-gray-400'
+                  'text-sm transition-colors duration-200 hover:text-white',
+                  location.pathname === link.path ? 'text-white font-medium' : 'text-white/70'
                 )}
               >
                 {link.name}
               </Link>
             ))}
           </div>
-
-          <div className="hidden md:flex lg:hidden items-center gap-4 text-xs font-medium">
-             <Link to="/" className={cn(location.pathname === '/' ? 'text-white' : 'text-gray-400')}>Home</Link>
-             <Link to="/tv" className={cn(location.pathname === '/tv' ? 'text-white' : 'text-gray-400')}>TV</Link>
-             <Link to="/movies" className={cn(location.pathname === '/movies' ? 'text-white' : 'text-gray-400')}>Movies</Link>
-          </div>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-6">
-          <div className="relative flex items-center">
-            <AnimatePresence>
-              {isSearchOpen ? (
-                <motion.form
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: window.innerWidth < 640 ? '140px' : '200px', opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  onSubmit={handleSearchSubmit}
-                  className="flex items-center bg-black/40 border border-white/20 rounded-sm overflow-hidden"
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button 
+              className="md:hidden text-white"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            
+            <form onSubmit={handleSearch} className="flex items-center">
+              <div className={cn(
+                "flex items-center bg-black/40 border-white/0 transition-all duration-300",
+                isSearchExpanded ? "border px-2 py-1 w-40 md:w-60 border-white" : "w-8"
+              )}>
+                <button 
+                  type="button"
+                  onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                  className="text-white flex-none"
                 >
-                  <button type="submit" className="px-2 text-gray-400">
-                    <Search size={18} />
-                  </button>
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Search"
-                    className="bg-transparent border-none outline-none text-xs md:text-sm py-1 pr-2 w-full placeholder:text-gray-500 text-white"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onBlur={() => !searchQuery && setIsSearchOpen(false)}
-                  />
-                </motion.form>
-              ) : (
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="text-white hover:text-gray-300 transition-colors p-1"
-                >
-                  <Search size={20} className="md:w-5 md:h-5" />
+                  <Search size={20} />
                 </button>
-              )}
-            </AnimatePresence>
+                <input
+                  type="text"
+                  placeholder="Titles, people, genres"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={cn(
+                    "bg-transparent text-white text-sm outline-none transition-all duration-300",
+                    isSearchExpanded ? "ml-2 w-full opacity-100" : "w-0 opacity-0"
+                  )}
+                />
+              </div>
+            </form>
+          </div>
+
+          <Link to="/my-list" className="hidden md:block text-white hover:text-white/70 transition-colors">
+            <Bookmark size={20} />
+          </Link>
+
+          <div className="w-8 h-8 rounded-sm bg-[#E50914] flex items-center justify-center text-white font-bold text-sm">
+            N
           </div>
         </div>
       </nav>
@@ -129,22 +115,43 @@ export default function Navbar() {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-[#141414] pt-20 flex flex-col items-center gap-8 md:hidden"
+            className="fixed inset-0 z-[100] bg-[#141414] flex flex-col p-6"
           >
-            <div className="flex flex-col items-center gap-6 w-full px-8">
+            <div className="flex items-center justify-between mb-8">
+              <span className="text-[#E50914] text-2xl font-black uppercase">Cineflix</span>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-white">
+                <X size={32} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 <Link
-                  key={link.name}
+                  key={link.path}
                   to={link.path}
-                  className={cn(
-                    'text-lg font-bold w-full text-center py-3 rounded-md transition-colors',
-                    location.pathname === link.path ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
-                  )}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "text-xl py-2 border-l-4 pl-4 transition-all",
+                    location.pathname === link.path ? "border-[#E50914] text-white font-bold" : "border-transparent text-white/70"
+                  )}
                 >
                   {link.name}
                 </Link>
               ))}
+              <Link
+                to="/my-list"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-xl py-2 border-l-4 pl-4 border-transparent text-white/70"
+              >
+                My List
+              </Link>
+              <Link
+                to="/watched"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-xl py-2 border-l-4 pl-4 border-transparent text-white/70"
+              >
+                Watched
+              </Link>
             </div>
           </motion.div>
         )}

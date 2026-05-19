@@ -1,76 +1,86 @@
 import { useState, useEffect } from 'react';
+import HeroSection from '../components/HeroSection';
+import MediaRow from '../components/MediaRow';
 import * as tmdb from '../lib/tmdb';
-import MediaCard from '../components/MediaCard';
-import { getImageUrl } from '../lib/tmdb';
+import { cn } from '../lib/utils';
 
 export default function TVShows() {
-  const [shows, setShows] = useState<any[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
   const [genres, setGenres] = useState<any[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadGenres() {
-      const g = await tmdb.getGenres('tv');
-      setGenres(g);
-    }
-    loadGenres();
-  }, []);
-
-  useEffect(() => {
-    async function fetchShows() {
-      setLoading(true);
+    async function fetchData() {
       try {
-        const results = selectedGenre 
-          ? await tmdb.getByGenre('tv', selectedGenre)
-          : await tmdb.getTrending('tv');
-        setShows(results);
+        setLoading(true);
+        const [tvGenres, trending, topRated, animation, drama, scifi, mystery] = await Promise.all([
+          tmdb.getGenres('tv'),
+          tmdb.getTrending('tv'),
+          tmdb.getTopRated('tv'),
+          tmdb.getByGenre('tv', 16),
+          tmdb.getByGenre('tv', 18),
+          tmdb.getByGenre('tv', 10765),
+          tmdb.getByGenre('tv', 9648),
+        ]);
+
+        setGenres(tvGenres);
+        setSections([
+          { title: 'Trending Series', items: trending },
+          { title: 'Top Rated', items: topRated },
+          { title: 'Animation', items: animation },
+          { title: 'Drama', items: drama },
+          { title: 'Sci-Fi & Fantasy', items: scifi },
+          { title: 'Mystery', items: mystery },
+        ]);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
-    fetchShows();
-  }, [selectedGenre]);
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="h-screen bg-[#141414]" />;
 
   return (
-    <div className="pt-20 md:pt-24 px-4 md:px-12 pb-32 relative z-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8 relative z-[5]">
-        <h1 className="text-2xl md:text-3xl font-bold">TV Shows</h1>
-        
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar touch-pan-x">
-          <button
+    <div className="pb-20 bg-[#141414]">
+      <div className="relative h-[60vh] overflow-hidden">
+        <HeroSection />
+      </div>
+
+      <div className="relative z-10 -mt-20 md:-mt-32 px-4 md:px-12 mb-8">
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-4">
+          <button 
             onClick={() => setSelectedGenre(null)}
-            className={`px-3 md:px-4 py-1 rounded-full text-xs md:text-sm border whitespace-nowrap min-h-[32px] ${!selectedGenre ? 'bg-white text-black border-white' : 'border-gray-600 hover:border-white'}`}
+            className={cn(
+              "flex-none px-6 py-1.5 rounded-full text-sm font-bold border transition-all",
+              selectedGenre === null ? "bg-white text-black border-white" : "text-white border-white/20 hover:border-white"
+            )}
           >
-            All
+            All Series
           </button>
-          {genres.map((genre) => (
-            <button
-              key={genre.id}
-              onClick={() => setSelectedGenre(genre.id)}
-              className={`px-3 md:px-4 py-1 rounded-full text-xs md:text-sm border whitespace-nowrap min-h-[32px] ${selectedGenre === genre.id ? 'bg-white text-black border-white' : 'border-gray-600 hover:border-white'}`}
+          {genres.map(g => (
+            <button 
+              key={g.id}
+              onClick={() => setSelectedGenre(g.id)}
+              className={cn(
+                "flex-none px-6 py-1.5 rounded-full text-sm font-bold border transition-all",
+                selectedGenre === g.id ? "bg-white text-black border-white" : "text-white border-white/20 hover:border-white"
+              )}
             >
-              {genre.name}
+              {g.name}
             </button>
           ))}
         </div>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-12">
-            {[...Array(12)].map((_, i) => (
-                <div key={i} className="aspect-video bg-gray-800 animate-pulse rounded-sm" />
-            ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-20 overflow-visible">
-          {shows.map((show) => (
-            <MediaCard key={show.id} item={show} type="tv" />
-          ))}
-        </div>
-      )}
+      <div className="space-y-12">
+        {sections.map((section, idx) => (
+          <MediaRow key={idx} title={section.title} items={section.items} type="tv" />
+        ))}
+      </div>
     </div>
   );
 }
