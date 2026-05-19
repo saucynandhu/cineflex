@@ -246,9 +246,36 @@ export default function Detail({ type }: DetailProps) {
         )}
 
         {activeTab === 'more' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 animate-fade-in pb-20">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 pb-20 animate-fade-in">
             {(data.recommendations?.results || []).map((item: any) => (
-              <MediaCard key={item.id} item={item} type={type} />
+              <div 
+                key={item.id}
+                onClick={() => navigate(`/${item.media_type || type}/${item.id}`)}
+                style={{ 
+                  width: '100%', 
+                  aspectRatio: '16/9', 
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  backgroundColor: '#141414'
+                }}
+                className="group"
+              >
+                <img
+                  src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
+                  alt={item.title || item.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {/* Simple hover overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 
+                  transition-all duration-300 flex items-end p-3">
+                  <p className="text-white text-xs font-semibold opacity-0 
+                    group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
+                    {item.title || item.name}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         )}

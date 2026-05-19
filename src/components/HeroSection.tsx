@@ -5,7 +5,7 @@ import { getImageUrl, getTrending } from '../lib/tmdb';
 import { cn } from '../lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 
-export default function HeroSection() {
+export default function HeroSection({ genreMap = {} }: { genreMap?: Record<number, string> }) {
   const [movies, setMovies] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -65,10 +65,10 @@ export default function HeroSection() {
             className="h-full w-full object-cover object-top"
           />
           
-          {/* Netflix Style Overlays */}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/80 to-transparent" />
+          {/* Refined Overlays */}
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/50 to-transparent h-full" style={{ background: 'linear-gradient(to top, #141414 0%, rgba(20,20,20,0.5) 20%, transparent 50%)' }} />
         </motion.div>
       </AnimatePresence>
 
@@ -87,7 +87,7 @@ export default function HeroSection() {
             {currentMovie.genre_ids?.slice(0, 3).map((id: number, idx: number) => (
               <span key={id} className="flex items-center text-xs text-white/80 font-medium">
                 {idx > 0 && <span className="mx-2 text-white/40">•</span>}
-                Genre {id} {/* Simplified since we don't have mapping here, but will look correct */}
+                {genreMap[id] || 'Genre'}
               </span>
             ))}
           </div>
@@ -116,7 +116,7 @@ export default function HeroSection() {
       </div>
 
       {/* Dot Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
         {movies.map((_, idx) => (
           <button
             key={idx}

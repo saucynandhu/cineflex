@@ -47,12 +47,8 @@ export default function Movies() {
   if (loading) return <div className="h-screen bg-[#141414]" />;
 
   return (
-    <div className="pb-20 bg-[#141414]">
-      <div className="relative h-[60vh] overflow-hidden">
-        <HeroSection />
-      </div>
-
-      <div className="relative z-10 -mt-20 md:-mt-32 px-4 md:px-12 mb-8">
+    <div className="pb-20 bg-[#141414] pt-24">
+      <div className="px-4 md:px-12 mb-8">
         <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-4">
           <button 
             onClick={() => setSelectedGenre(null)}

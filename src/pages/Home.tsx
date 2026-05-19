@@ -6,14 +6,29 @@ import { useUserLists } from '../hooks/useUserLists';
 
 export default function Home() {
   const [sections, setSections] = useState<any[]>([]);
+  const [genreMap, setGenreMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
-  const { continueWatching, removeFromContinueWatching } = useUserLists();
+  const { continueWatching: initialCW, removeFromContinueWatching } = useUserLists();
+  const [cwItems, setCwItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    setCwItems(initialCW);
+  }, [initialCW]);
+
+  const handleCWRemove = (id: number, type: string) => {
+    removeFromContinueWatching(id, type as 'movie' | 'tv');
+    setCwItems(prev => prev.filter(item => 
+      !( (Number(item.tmdbId) === Number(id) || Number(item.id) === Number(id)) && item.type === type )
+    ));
+  };
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
         const [
+          movieGenres,
+          tvGenres,
           trending,
           trendingTV,
           topRated,
@@ -27,6 +42,8 @@ export default function Home() {
           anime,
           popularTV
         ] = await Promise.all([
+          tmdb.getGenres('movie'),
+          tmdb.getGenres('tv'),
           tmdb.getTrending('movie'),
           tmdb.getTrending('tv'),
           tmdb.getTopRated('movie'),
@@ -40,6 +57,11 @@ export default function Home() {
           tmdb.getByGenre('tv', 16), // Anime
           tmdb.getPopular('tv'),
         ]);
+
+        const map: Record<number, string> = {};
+        movieGenres.forEach((g: any) => map[g.id] = g.name);
+        tvGenres.forEach((g: any) => map[g.id] = g.name);
+        setGenreMap(map);
 
         setSections([
           { title: 'Trending Now', items: trending, type: 'movie' },
@@ -71,16 +93,16 @@ export default function Home() {
 
   return (
     <div className="relative pb-20 bg-[#141414]">
-      <HeroSection />
+      <HeroSection genreMap={genreMap} />
       
-      <div className="relative -mt-32 md:-mt-48 z-10 space-y-8 md:space-y-12">
-        {continueWatching.length > 0 && (
+      <div className="relative z-10 pt-5 space-y-8 md:space-y-12">
+        {cwItems.length > 0 && (
           <MediaRow
             title="Continue Watching"
-            items={continueWatching}
+            items={cwItems}
             type="all"
             listType="continue_watching"
-            onRemove={removeFromContinueWatching}
+            onRemove={handleCWRemove}
           />
         )}
 
