@@ -5,39 +5,20 @@ import * as tmdb from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
 
 export default function Home() {
-  const [heroMovie, setHeroMovie] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
+  const [genreMap, setGenreMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
-
-  const { continueWatching, watchLater, removeFromContinueWatching, removeFromWatchLater } = useUserLists();
+  const { continueWatching: initialCW, removeFromContinueWatching } = useUserLists();
   const [cwItems, setCwItems] = useState<any[]>([]);
-  const [wlItems, setWlItems] = useState<any[]>([]);
 
   useEffect(() => {
-    setCwItems(continueWatching);
-  }, [continueWatching]);
+    setCwItems(initialCW);
+  }, [initialCW]);
 
-  useEffect(() => {
-    setWlItems(watchLater);
-  }, [watchLater]);
-
-  const handleCWRemove = (tmdbId: number, type: string) => {
-    removeFromContinueWatching(tmdbId, type as 'movie' | 'tv');
-    setCwItems(prev => prev.filter(
-      item => !(
-        (Number(item.tmdbId) === Number(tmdbId) || Number(item.id) === Number(tmdbId)) 
-        && item.type === type
-      )
-    ));
-  };
-
-  const handleWLRemove = (tmdbId: number, type: string) => {
-    removeFromWatchLater(tmdbId, type as 'movie' | 'tv');
-    setWlItems(prev => prev.filter(
-      item => !(
-        (Number(item.tmdbId) === Number(tmdbId) || Number(item.id) === Number(tmdbId)) 
-        && item.type === type
-      )
+  const handleCWRemove = (id: number, type: string) => {
+    removeFromContinueWatching(id, type as 'movie' | 'tv');
+    setCwItems(prev => prev.filter(item => 
+      !( (Number(item.tmdbId) === Number(id) || Number(item.id) === Number(id)) && item.type === type )
     ));
   };
 
@@ -46,38 +27,55 @@ export default function Home() {
       try {
         setLoading(true);
         const [
+          movieGenres,
+          tvGenres,
           trending,
           trendingTV,
           topRated,
-          popularTV,
+          topRatedTV,
           action,
           comedy,
           horror,
-          documentaries
+          thriller,
+          scifi,
+          documentaries,
+          anime,
+          popularTV
         ] = await Promise.all([
+          tmdb.getGenres('movie'),
+          tmdb.getGenres('tv'),
           tmdb.getTrending('movie'),
           tmdb.getTrending('tv'),
           tmdb.getTopRated('movie'),
-          tmdb.getPopular('tv'),
+          tmdb.getTopRated('tv'),
           tmdb.getByGenre('movie', 28), // Action
           tmdb.getByGenre('movie', 35), // Comedy
           tmdb.getByGenre('movie', 27), // Horror
+          tmdb.getByGenre('movie', 53), // Thriller
+          tmdb.getByGenre('movie', 878), // Sci-Fi
           tmdb.getByGenre('movie', 99), // Documentary
+          tmdb.getByGenre('tv', 16), // Anime
+          tmdb.getPopular('tv'),
         ]);
 
-        // Randomize hero movie from trending
-        const randomHero = trending[Math.floor(Math.random() * trending.length)];
-        setHeroMovie(randomHero);
+        const map: Record<number, string> = {};
+        movieGenres.forEach((g: any) => map[g.id] = g.name);
+        tvGenres.forEach((g: any) => map[g.id] = g.name);
+        setGenreMap(map);
 
         setSections([
-          { title: 'Trending Movies', items: trending, type: 'movie' },
-          { title: 'Trending TV Shows', items: trendingTV, type: 'tv' },
-          { title: 'Top Rated Movies', items: topRated, type: 'movie' },
+          { title: 'Trending Now', items: trending, type: 'movie' },
+          { title: 'New on Cineflix', items: trending.slice().reverse(), type: 'movie' }, // Mocking new
           { title: 'Popular TV Shows', items: popularTV, type: 'tv' },
-          { title: 'Action Movies', items: action, type: 'movie' },
-          { title: 'Comedy Movies', items: comedy, type: 'movie' },
-          { title: 'Horror Favourites', items: horror, type: 'movie' },
+          { title: 'Top Rated Movies', items: topRated, type: 'movie' },
+          { title: 'Action & Adventure', items: action, type: 'movie' },
+          { title: 'Comedies', items: comedy, type: 'movie' },
+          { title: 'Thrillers', items: thriller, type: 'movie' },
+          { title: 'Sci-Fi', items: scifi, type: 'movie' },
+          { title: 'Horror', items: horror, type: 'movie' },
+          { title: 'Anime', items: anime, type: 'tv' },
           { title: 'Documentaries', items: documentaries, type: 'movie' },
+          { title: 'Binge-Worthy Series', items: topRatedTV, type: 'tv' },
         ]);
       } catch (error) {
         console.error('Error fetching home data:', error);
@@ -90,14 +88,14 @@ export default function Home() {
   }, []);
 
   if (loading) {
-     return <div className="pt-20 px-12 text-center text-gray-500">Loading CineFlix magic...</div>;
+     return <div className="h-screen bg-[#141414] flex items-center justify-center text-red-600 font-bold text-2xl">CINEFLIX</div>;
   }
 
   return (
-    <div className="relative pb-32">
-      <HeroSection movie={heroMovie} />
+    <div className="relative pb-20 bg-[#141414]">
+      <HeroSection genreMap={genreMap} />
       
-      <div className="relative -mt-10 md:-mt-32 z-10 space-y-4 md:space-y-0">
+      <div className="relative z-10 pt-5 space-y-8 md:space-y-12">
         {cwItems.length > 0 && (
           <MediaRow
             title="Continue Watching"

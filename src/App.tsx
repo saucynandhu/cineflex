@@ -11,7 +11,6 @@ import Detail from './pages/Detail';
 import Watch from './pages/Watch';
 import Search from './pages/Search';
 import MyList from './pages/MyList';
-import Watched from './pages/Watched';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -26,7 +25,6 @@ export default function App() {
             <Route path="/movies" element={<Movies />} />
             <Route path="/tv" element={<TVShows />} />
             <Route path="/my-list" element={<MyList />} />
-            <Route path="/watched" element={<Watched />} />
             <Route path="/movie/:id" element={<Detail type="movie" />} />
             <Route path="/tv/:id" element={<Detail type="tv" />} />
             <Route path="/watch/movie/:id" element={<Watch type="movie" />} />
