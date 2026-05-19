@@ -145,13 +145,6 @@ export default function Navbar() {
               >
                 My List
               </Link>
-              <Link
-                to="/watched"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-xl py-2 border-l-4 pl-4 border-transparent text-white/70"
-              >
-                Watched
-              </Link>
             </div>
           </motion.div>
         )}
