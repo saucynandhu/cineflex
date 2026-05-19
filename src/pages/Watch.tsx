@@ -13,7 +13,7 @@ interface WatchProps {
 export default function Watch({ type }: WatchProps) {
   const { id, season, episode } = useParams();
   const navigate = useNavigate();
-  const [source, setSource] = useState<SourceId>('vidlink');
+  const [source, setSource] = useState<SourceId>('videasy');
   const [imdbId, setImdbId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
@@ -61,11 +61,10 @@ export default function Watch({ type }: WatchProps) {
 
         addToContinueWatching({
           ...commonData,
-          progress: 0,
           watchedAt: Date.now(),
           season: type === 'tv' ? Number(season) : undefined,
           episode: type === 'tv' ? Number(episode) : undefined,
-          episodeName: type === 'tv' ? details.name : undefined, // Placeholder for actual episode name if needed
+          episodeName: type === 'tv' ? details.name : undefined,
           addedAt: Date.now()
         });
 
@@ -106,9 +105,21 @@ export default function Watch({ type }: WatchProps) {
     const e = episode || '1';
 
     const patterns: Record<SourceId, { movie: string; tv: string }> = {
+      videasy: {
+        movie: `https://player.videasy.net/movie/${tmdbId}`,
+        tv: `https://player.videasy.net/tv/${tmdbId}/${s}/${e}`
+      },
       vidlink: {
         movie: `https://vidlink.pro/movie/${tmdbId}`,
         tv: `https://vidlink.pro/tv/${tmdbId}/${s}/${e}`
+      },
+      vidfast: {
+        movie: `https://vidfast.pro/movie/${tmdbId}`,
+        tv: `https://vidfast.pro/tv/${tmdbId}/${s}/${e}`
+      },
+      autoembed: {
+        movie: `https://player.autoembed.cc/embed/movie/${tmdbId}`,
+        tv: `https://player.autoembed.cc/embed/tv/${tmdbId}/${s}/${e}`
       },
       vidsrc_me: {
         movie: `https://vidsrc.me/embed/movie/${tmdbId}`,
@@ -122,13 +133,29 @@ export default function Watch({ type }: WatchProps) {
         movie: `https://vidsrc.icu/embed/movie/${tmdbId}`,
         tv: `https://vidsrc.icu/embed/tv/${tmdbId}/${s}/${e}`
       },
+      vidsrc_vip: {
+        movie: `https://vidsrc.vip/embed/movie/${tmdbId}`,
+        tv: `https://vidsrc.vip/embed/tv/${tmdbId}/${s}/${e}`
+      },
+      rivestream: {
+        movie: `https://rivestream.org/embed/movie/${tmdbId}`,
+        tv: `https://rivestream.org/embed/tv/${tmdbId}/${s}/${e}`
+      },
+      pstream: {
+        movie: `https://iframe.pstream.org/movie/${tmdbId}`,
+        tv: `https://iframe.pstream.org/tv/${tmdbId}/${s}/${e}`
+      },
       twoembed: {
-        movie: `https://www.2embed.cc/embed/${imdbId}`,
-        tv: `https://www.2embed.cc/embedtv/${imdbId}&s=${s}&e=${e}`
+        movie: `https://www.2embed.cc/embed/${tmdbId}`,
+        tv: `https://www.2embed.cc/embedtv/${tmdbId}&s=${s}&e=${e}`
       },
       superembed: {
         movie: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`,
         tv: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${s}&e=${e}`
+      },
+      autoembed_co: {
+        movie: `https://autoembed.co/movie/tmdb/${tmdbId}`,
+        tv: `https://autoembed.co/tv/tmdb/${tmdbId}-${s}-${e}`
       }
     };
 

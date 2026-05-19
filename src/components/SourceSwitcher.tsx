@@ -3,12 +3,19 @@ import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
 export type SourceId = 
+  | 'videasy'
   | 'vidlink' 
+  | 'vidfast'
+  | 'autoembed'
   | 'vidsrc_me' 
   | 'vidsrc_cc' 
   | 'vidsrc_icu' 
+  | 'vidsrc_vip'
+  | 'rivestream'
+  | 'pstream'
   | 'twoembed' 
-  | 'superembed';
+  | 'superembed'
+  | 'autoembed_co';
 
 interface Source {
   id: SourceId;
@@ -16,12 +23,19 @@ interface Source {
 }
 
 const SOURCES: Source[] = [
+  { id: 'videasy', name: 'Videasy' },
   { id: 'vidlink', name: 'VidLink' },
+  { id: 'vidfast', name: 'VidFast' },
+  { id: 'autoembed', name: 'AutoEmbed' },
   { id: 'vidsrc_me', name: 'VidSrc.me' },
   { id: 'vidsrc_cc', name: 'VidSrc.cc' },
   { id: 'vidsrc_icu', name: 'VidSrc.icu' },
+  { id: 'vidsrc_vip', name: 'VidSrc.vip' },
+  { id: 'rivestream', name: 'Rivestream' },
+  { id: 'pstream', name: 'Pstream' },
   { id: 'twoembed', name: '2Embed' },
   { id: 'superembed', name: 'SuperEmbed' },
+  { id: 'autoembed_co', name: 'AutoEmbed.co' },
 ];
 
 interface SourceSwitcherProps {

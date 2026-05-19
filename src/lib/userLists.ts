@@ -14,7 +14,6 @@ export interface ContinueWatchingItem extends ListItem {
   season?: number;
   episode?: number;
   episodeName?: string;
-  progress: number;
   watchedAt: number;
 }
 
