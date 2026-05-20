@@ -40,6 +40,7 @@ export default function Detail({ type }: DetailProps) {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collection, setCollection] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'more'>('overview');
   const [activeTrailer, setActiveTrailer] = useState<string | null>(null);
 
@@ -50,11 +51,17 @@ export default function Detail({ type }: DetailProps) {
     async function fetchDetails() {
       if (!id) return;
       setLoading(true);
+      setCollection(null);
       try {
         const details = await tmdb.getDetails(type, id);
         setData(details);
         if (type === 'tv') {
           setSeasons(details.seasons.filter((s: any) => s.season_number > 0));
+        }
+
+        if (type === 'movie' && details.belongs_to_collection) {
+          const collectionData = await tmdb.getCollection(details.belongs_to_collection.id);
+          setCollection(collectionData);
         }
       } catch (err) {
         console.error(err);
@@ -226,6 +233,49 @@ export default function Detail({ type }: DetailProps) {
                 ))}
               </div>
             </div>
+
+            {type === 'movie' && collection && (
+              <div className="bg-white/5 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-white mb-3">{collection.name}</h3>
+                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                  {collection.parts
+                    .filter((part: any) => part.poster_path)
+                    .sort((a: any, b: any) => (a.release_date || '').localeCompare(b.release_date || ''))
+                    .map((part: any) => {
+                      const isCurrent = Number(part.id) === Number(id);
+                      const releaseYear = (part.release_date || '').split('-')[0];
+                      return (
+                        <div 
+                          key={part.id}
+                          onClick={() => !isCurrent && navigate(`/movie/${part.id}`)}
+                          className={cn(
+                            "flex-none w-20 md:w-24 cursor-pointer relative group",
+                            isCurrent ? "cursor-default" : "opacity-70 hover:opacity-100 transition-opacity"
+                          )}
+                        >
+                          <div className={cn(
+                            "aspect-[2/3] rounded overflow-hidden relative",
+                            isCurrent && "border-2 border-[#E50914]"
+                          )}>
+                            <img 
+                              src={`https://image.tmdb.org/t/p/w200${part.poster_path}`} 
+                              alt={part.title}
+                              className="w-full h-full object-cover"
+                            />
+                            {isCurrent && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-[#E50914] text-white text-[10px] text-center py-0.5 font-bold">
+                                Now Watching
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-white font-medium mt-1 line-clamp-1">{part.title}</p>
+                          <p className="text-[10px] text-white/40">{releaseYear}</p>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

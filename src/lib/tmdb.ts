@@ -12,6 +12,7 @@ api.interceptors.request.use((config) => {
   config.params = {
     ...config.params,
     api_key: API_KEY,
+    language: 'en-US',
   };
   return config;
 });
@@ -82,4 +83,9 @@ export const getGenres = async (type: 'movie' | 'tv') => {
 export const getExternalIds = async (type: 'movie' | 'tv', id: string) => {
   const { data } = await api.get(`/${type}/${id}/external_ids`);
   return data;
+};
+
+export const getCollection = async (collectionId: number) => {
+  const { data } = await api.get(`/collection/${collectionId}`);
+  return data; // { id, name, overview, parts: [...movies] }
 };
