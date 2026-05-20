@@ -141,15 +141,6 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
             alt={item.title || item.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
-
-          {/* Progress Bar (Continue Watching) */}
-          {listType === 'continue_watching' && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'rgba(255,255,255,0.3)' }}>
-              <div 
-                style={{ height: '100%', background: '#E50914', width: `${item.progress || 30}%`, transition: 'width 0.3s ease' }} 
-              />
-            </div>
-          )}
         </div>
 
         {/* EPISODE LABEL for Continue Watching TV shows */}

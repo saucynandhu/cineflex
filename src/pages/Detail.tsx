@@ -158,9 +158,6 @@ export default function Detail({ type }: DetailProps) {
           {type === 'tv' && cwItem && (
             <div className="space-y-2">
               <p className="text-xs text-white/60">Continue watching: S{cwItem.season} E{cwItem.episode} · {cwItem.episodeName || 'Episode Name'}</p>
-              <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-[#E50914]" style={{ width: `${cwItem.progress || 30}%` }} />
-              </div>
             </div>
           )}
 
