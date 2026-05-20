@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as tmdb from '../lib/tmdb';
-import SourceSwitcher, { SourceId } from '../components/SourceSwitcher';
+import { SourceId } from '../components/SourceSwitcher';
 import { useUserLists } from '../hooks/useUserLists';
 
 interface WatchProps {
@@ -15,12 +15,14 @@ export default function Watch({ type }: WatchProps) {
   const navigate = useNavigate();
   const [source, setSource] = useState<SourceId>('videasy');
   const [imdbId, setImdbId] = useState<string | null>(null);
+  const [mediaData, setMediaData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   
   // TV specific state
   const [tvDetails, setTvDetails] = useState<any>(null);
   const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<any[]>([]);
+  const currentEpisodeData = currentSeasonEpisodes.find(ep => ep.episode_number === Number(episode));
 
   const { addToContinueWatching, addToWatched } = useUserLists();
 
@@ -34,6 +36,7 @@ export default function Watch({ type }: WatchProps) {
         ]);
         
         setImdbId(externalIds.imdb_id);
+        setMediaData(details);
         
         if (type === 'tv') {
           setTvDetails(details);
@@ -95,7 +98,7 @@ export default function Watch({ type }: WatchProps) {
     setIsIframeLoading(true);
     const timer = setTimeout(() => {
       setIsIframeLoading(false);
-    }, 2500); // Fallback to hide loader if iframe event doesn't fire
+    }, 2500);
     return () => clearTimeout(timer);
   }, [source, season, episode]);
 
@@ -183,7 +186,6 @@ export default function Watch({ type }: WatchProps) {
     if (e < currentSeasonEpisodes.length) {
       navigate(`/watch/tv/${id}/${s}/${e + 1}`);
     } else {
-      // Check if next season exists
       const nextSeasonNum = s + 1;
       const nextSeason = tvDetails?.seasons?.find((sn: any) => sn.season_number === nextSeasonNum);
       if (nextSeason) {
@@ -202,89 +204,124 @@ export default function Watch({ type }: WatchProps) {
   if (loading) return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
       <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
-      <p className="text-gray-400 font-medium">Fetching media information...</p>
+      <p className="text-gray-400 font-medium tracking-widest text-[10px] uppercase">Preparing your stream...</p>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+    <div className="h-screen w-screen flex flex-col bg-black overflow-hidden">
       {/* Top Bar */}
-      <div className="p-3 md:p-6 bg-[#141414] border-b border-white/5 z-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
-          <button
-            onClick={() => navigate(`/${type}/${id}`)}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors font-bold uppercase tracking-widest text-[10px] md:text-xs min-h-[44px]"
-          >
-            <ArrowLeft size={16} />
-            Back to Details
-          </button>
-          
-          <div className="flex items-center gap-4">
-             <SourceSwitcher activeSource={source} onSourceChange={setSource} />
-          </div>
+      <div className="flex-none h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
+        <button
+          onClick={() => navigate(`/${type}/${id}`)}
+          className="flex items-center gap-2 text-white/70 hover:text-white transition-all font-bold uppercase tracking-widest text-[10px] md:text-xs"
+        >
+          <ArrowLeft size={18} />
+          <span className="hidden sm:inline">Back to Details</span>
+        </button>
+
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-white font-semibold text-xs md:text-sm leading-tight line-clamp-1 max-w-[200px] md:max-w-md">
+            {mediaData?.title || mediaData?.name}
+          </h1>
+          {type === 'tv' && (
+            <p className="text-white/60 text-[10px] font-medium mt-0.5">
+              Season {season} · Episode {episode}
+            </p>
+          )}
+        </div>
+
+        <div>
+           <select
+             value={source}
+             onChange={(e) => setSource(e.target.value as SourceId)}
+             className="bg-transparent border border-white/30 text-white text-xs rounded-md px-3 py-1.5 outline-none cursor-pointer hover:border-white/50 transition-colors"
+           >
+             <option value="videasy" className="bg-[#141414]">Videasy</option>
+             <option value="vidlink" className="bg-[#141414]">VidLink</option>
+             <option value="vidfast" className="bg-[#141414]">VidFast</option>
+             <option value="autoembed" className="bg-[#141414]">AutoEmbed</option>
+             <option value="vidsrc_me" className="bg-[#141414]">VidSrc.me</option>
+             <option value="vidsrc_cc" className="bg-[#141414]">VidSrc.cc</option>
+             <option value="vidsrc_icu" className="bg-[#141414]">VidSrc.icu</option>
+             <option value="vidsrc_vip" className="bg-[#141414]">VidSrc.vip</option>
+             <option value="rivestream" className="bg-[#141414]">Rivestream</option>
+             <option value="pstream" className="bg-[#141414]">Pstream</option>
+             <option value="twoembed" className="bg-[#141414]">2Embed</option>
+             <option value="superembed" className="bg-[#141414]">SuperEmbed</option>
+             <option value="autoembed_co" className="bg-[#141414]">AutoEmbed.co</option>
+           </select>
         </div>
       </div>
 
-      {/* Player Iframe */}
-      <div className="flex-1 w-full bg-black relative overflow-hidden flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${source}-${season}-${episode}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full h-full relative group"
-          >
-            <iframe
-              src={getEmbedUrl()}
-              className="w-full h-full border-none"
-              allowFullScreen
-              allow="autoplay; encrypted-media"
-              title="Video Player"
-              onLoad={() => setIsIframeLoading(false)}
-            />
+      {/* Iframe Area */}
+      <div className="flex-1 relative overflow-hidden bg-black">
+        <iframe
+          src={getEmbedUrl()}
+          className="w-full h-full border-none"
+          allowFullScreen
+          allow="autoplay; encrypted-media"
+          title="Video Player"
+          onLoad={() => setIsIframeLoading(false)}
+        />
 
-            {/* Navigation Buttons */}
-            {type === 'tv' && (
-              <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-0 pointer-events-none z-10">
-                <AnimatePresence>
-                  {!isFirstEpisodeOfFirstSeason && (
-                    <motion.button
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      onClick={handlePrev}
-                      className="w-10 h-20 bg-black/50 hover:bg-black/80 text-white flex items-center justify-center rounded-r-md transition-all pointer-events-auto group/prev"
-                    >
-                      <ChevronLeft size={32} className="group-hover/prev:scale-110 transition-transform" />
-                    </motion.button>
-                  )}
-
-                  {!isLastEpisodeOfSeries && (
-                    <motion.button
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      onClick={handleNext}
-                      className="w-10 h-20 bg-black/50 hover:bg-black/80 text-white flex items-center justify-center rounded-l-md transition-all pointer-events-auto group/next"
-                    >
-                      <ChevronRight size={32} className="group-hover/next:scale-110 transition-transform" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
+        <AnimatePresence>
+          {isIframeLoading && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-6 z-20"
+            >
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-white/10 border-t-white rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+                </div>
               </div>
-            )}
-          </motion.div>
+              <p className="text-gray-400 font-bold tracking-widest text-[10px] uppercase">Loading Source...</p>
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        {isIframeLoading && (
-          <div className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-4 z-40">
-            <Loader2 className="w-10 h-10 md:w-12 md:h-12 text-red-600 animate-spin" />
-            <p className="text-gray-400 font-bold tracking-widest text-[10px] md:text-xs uppercase">Loading Player Source...</p>
-          </div>
-        )}
       </div>
+
+      {/* Bottom Bar (TV Only) */}
+      {type === 'tv' && (
+        <div className="flex-none h-14 bg-gradient-to-t from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
+          <div className="flex items-center gap-4">
+            {!isFirstEpisodeOfFirstSeason && (
+              <button
+                onClick={handlePrev}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+              >
+                <ChevronLeft size={16} />
+                <span className="hidden sm:inline">Previous Episode</span>
+              </button>
+            )}
+          </div>
+
+          <div className="text-center">
+            <p className="text-white/70 text-[10px] md:text-xs font-medium">
+              Season {season} · Episode {episode}
+              {currentEpisodeData?.name && <span className="hidden md:inline"> · {currentEpisodeData.name}</span>}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {!isLastEpisodeOfSeries && (
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+              >
+                <span className="hidden sm:inline">Next Episode</span>
+                <ChevronRight size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
