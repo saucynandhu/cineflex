@@ -3,6 +3,7 @@ import HeroSection from '../components/HeroSection';
 import MediaRow from '../components/MediaRow';
 import * as tmdb from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
+import { cn } from '../lib/utils';
 
 export default function Home() {
   const [sections, setSections] = useState<any[]>([]);
@@ -10,7 +11,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const { continueWatching: initialCW, removeFromContinueWatching } = useUserLists();
   const [cwItems, setCwItems] = useState<any[]>([]);
-
+  
   useEffect(() => {
     setCwItems(initialCW);
   }, [initialCW]);

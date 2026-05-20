@@ -3,12 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bookmark, Menu, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
+import { getTrending } from '../lib/tmdb';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSurprising, setIsSurprising] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -30,6 +32,24 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleSurprise = async () => {
+    if (isSurprising) return;
+    setIsSurprising(true);
+    try {
+      const results = await getTrending('all', 'week');
+      if (results && results.length > 0) {
+        const random = results[Math.floor(Math.random() * results.length)];
+        const type = random.media_type || (random.first_air_date ? 'tv' : 'movie');
+        navigate(`/${type}/${random.id}`);
+        setIsMobileMenuOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to surprise:', error);
+    } finally {
+      setIsSurprising(false);
     }
   };
 
@@ -59,6 +79,14 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
+            
+            <button 
+              onClick={handleSurprise}
+              disabled={isSurprising}
+              className="border border-gray-600 text-white text-sm px-3 py-1 rounded-full hover:border-white transition 0.2s disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ml-2"
+            >
+              {isSurprising ? 'Finding something...' : 'Surprise Me'}
+            </button>
           </div>
         </div>
 
@@ -145,6 +173,14 @@ export default function Navbar() {
               >
                 My List
               </Link>
+
+              <button 
+                onClick={handleSurprise}
+                disabled={isSurprising}
+                className="w-full mt-4 border border-white/20 text-white text-xl py-3 rounded font-bold hover:bg-white/5 transition-all disabled:opacity-50"
+              >
+                {isSurprising ? 'Finding something...' : 'Surprise Me'}
+              </button>
             </div>
           </motion.div>
         )}

@@ -71,6 +71,7 @@ export default function Movies() {
   return (
     <div className="pb-20 bg-[#141414] pt-24">
       <div className="px-4 md:px-12 mb-8">
+        {/* Genre Filter */}
         <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-4">
           <button 
             onClick={() => setSelectedGenre(null)}
