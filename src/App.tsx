@@ -11,6 +11,7 @@ import Detail from './pages/Detail';
 import Watch from './pages/Watch';
 import Search from './pages/Search';
 import MyList from './pages/MyList';
+import Donate from './pages/Donate';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -27,6 +28,7 @@ function AppContent() {
           <Route path="/movies" element={<Movies />} />
           <Route path="/tv" element={<TVShows />} />
           <Route path="/my-list" element={<MyList />} />
+          <Route path="/donate" element={<Donate />} />
           <Route path="/movie/:id" element={<Detail type="movie" />} />
           <Route path="/tv/:id" element={<Detail type="tv" />} />
           <Route path="/watch/movie/:id" element={<Watch type="movie" />} />

@@ -26,6 +26,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'TV Shows', path: '/tv' },
     { name: 'Movies', path: '/movies' },
+    { name: 'Donate', path: '/donate' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
