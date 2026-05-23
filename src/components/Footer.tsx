@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Instagram, Github, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -18,16 +18,6 @@ const Footer = () => {
         </div>
 
         <div className="flex items-center gap-2 text-[#808080] text-[10px] md:text-xs font-medium">
-          <span className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
-            <Instagram size={14} />
-            <a href="https://instagram.com/nandhu_sauce" target="_blank" rel="noopener noreferrer">@nandhu_sauce</a>
-          </span>
-          <span className="text-[#333]">·</span>
-          <span className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
-            <Github size={14} />
-            <a href="https://github.com/saucynandhu" target="_blank" rel="noopener noreferrer">@saucynandhu</a>
-          </span>
-          <span className="text-[#333]">·</span>
           <span className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
             <Heart size={14} className="text-[#E50914]" />
             <a href="/donate">Support Me</a>
