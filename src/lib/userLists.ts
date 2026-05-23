@@ -49,6 +49,17 @@ function setStorageItem<T>(key: string, value: T): void {
   }
 }
 
+function hasSameMediaId(item: ListItem, tmdbId: number): boolean {
+  return Number(item.tmdbId) === Number(tmdbId) || Number(item.id) === Number(tmdbId);
+}
+
+function isSameWatchedItem(item: WatchedItem, target: WatchedItem): boolean {
+  if (item.type !== target.type || !hasSameMediaId(item, target.tmdbId)) return false;
+  if (target.type === 'movie') return true;
+
+  return Number(item.season) === Number(target.season) && Number(item.episode) === Number(target.episode);
+}
+
 // Continue Watching
 export const getContinueWatching = (): ContinueWatchingItem[] => 
   getStorageItem<ContinueWatchingItem[]>(CONTINUE_WATCHING_KEY, []);
@@ -126,7 +137,7 @@ export const getPreviouslyWatched = (): WatchedItem[] =>
 
 export const addToWatched = (item: WatchedItem): void => {
   let list = getPreviouslyWatched();
-  const index = list.findIndex(i => (Number(i.tmdbId) === Number(item.tmdbId) || Number(i.id) === Number(item.tmdbId)) && i.type === item.type);
+  const index = list.findIndex(i => isSameWatchedItem(i, item));
   
   if (index !== -1) {
     list.splice(index, 1);
@@ -137,16 +148,23 @@ export const addToWatched = (item: WatchedItem): void => {
   setStorageItem(WATCHED_KEY, list);
 };
 
-export const isWatched = (tmdbId: number, type: 'movie' | 'tv'): boolean => {
-  return getPreviouslyWatched().some(i => (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type);
+export const isWatched = (tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number): boolean => {
+  return getPreviouslyWatched().some(i => {
+    if (!hasSameMediaId(i, tmdbId) || i.type !== type) return false;
+    if (type === 'movie') return true;
+    if (season === undefined || episode === undefined) return true;
+
+    return Number(i.season) === Number(season) && Number(i.episode) === Number(episode);
+  });
 };
 
-export const removeFromWatched = (tmdbId: number, type: 'movie' | 'tv'): void => {
-  const list = getPreviouslyWatched().filter(i => 
-    !(
-      (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) 
-      && i.type === type
-    )
-  );
+export const removeFromWatched = (tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number): void => {
+  const list = getPreviouslyWatched().filter(i => {
+    if (!hasSameMediaId(i, tmdbId) || i.type !== type) return true;
+    if (type === 'movie') return false;
+    if (season === undefined || episode === undefined) return false;
+
+    return Number(i.season) !== Number(season) || Number(i.episode) !== Number(episode);
+  });
   setStorageItem(WATCHED_KEY, list);
 };

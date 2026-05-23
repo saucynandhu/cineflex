@@ -72,8 +72,8 @@ export function useUserLists() {
     triggerUpdate();
   }, [triggerUpdate]);
 
-  const removeFromWatched = useCallback((tmdbId: number, type: 'movie' | 'tv') => {
-    lists.removeFromWatched(tmdbId, type);
+  const removeFromWatched = useCallback((tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
+    lists.removeFromWatched(tmdbId, type, season, episode);
     triggerUpdate();
   }, [triggerUpdate]);
 
@@ -81,8 +81,8 @@ export function useUserLists() {
     return lists.isInWatchLater(tmdbId, type);
   }, []);
 
-  const isWatched = useCallback((tmdbId: number, type: 'movie' | 'tv') => {
-    return lists.isWatched(tmdbId, type);
+  const isWatched = useCallback((tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
+    return lists.isWatched(tmdbId, type, season, episode);
   }, []);
 
   return {

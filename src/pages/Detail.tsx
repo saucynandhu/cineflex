@@ -44,8 +44,17 @@ export default function Detail({ type }: DetailProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'more'>('overview');
   const [activeTrailer, setActiveTrailer] = useState<string | null>(null);
 
-  const { isInWatchLater, toggleWatchLater, continueWatching } = useUserLists();
+  const { isInWatchLater, toggleWatchLater, continueWatching, watched } = useUserLists();
   const cwItem = continueWatching.find(i => String(i.tmdbId || i.id) === String(id));
+
+  const isEpisodeWatched = useCallback((seasonNumber: number, episodeNumber: number) => {
+    return watched.some(item =>
+      item.type === 'tv' &&
+      String(item.tmdbId || item.id) === String(id) &&
+      Number(item.season) === Number(seasonNumber) &&
+      Number(item.episode) === Number(episodeNumber)
+    );
+  }, [id, watched]);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -285,20 +294,43 @@ export default function Detail({ type }: DetailProps) {
                </select>
              </div>
              <div className="space-y-4">
-               {episodes.map(ep => (
-                 <div key={ep.id} onClick={() => navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)} className="flex gap-4 p-4 rounded hover:bg-white/5 cursor-pointer group">
-                   <div className="relative w-40 aspect-video rounded overflow-hidden flex-none">
-                     <img src={getImageUrl(ep.still_path, 'w500')} className="w-full h-full object-cover" alt="" />
-                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Play size={24} fill="white" /></div>
-                     <span className="absolute top-2 left-2 text-xl font-black text-white/50">{ep.episode_number}</span>
+               {episodes.map(ep => {
+                 const episodeWatched = isEpisodeWatched(selectedSeason, ep.episode_number);
+                 return (
+                   <div
+                     key={ep.id}
+                     onClick={() => navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)}
+                     className={cn(
+                       "flex gap-4 p-4 rounded hover:bg-white/5 cursor-pointer group",
+                       episodeWatched && "bg-white/[0.03]"
+                     )}
+                   >
+                     <div className="relative w-40 aspect-video rounded overflow-hidden flex-none">
+                       <img src={getImageUrl(ep.still_path, 'w500')} className="w-full h-full object-cover" alt="" />
+                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Play size={24} fill="white" /></div>
+                       <span className="absolute top-2 left-2 text-xl font-black text-white/50">{ep.episode_number}</span>
+                       {episodeWatched && (
+                         <span
+                           title="Watched"
+                           className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E50914] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                         >
+                           <Check size={14} strokeWidth={3} />
+                         </span>
+                       )}
+                     </div>
+                     <div className="flex-1 space-y-1">
+                       <h4 className="font-bold text-sm">{ep.name}</h4>
+                       <p className="text-xs text-white/50 line-clamp-2">{ep.overview || 'No overview available.'}</p>
+                     </div>
+                     <div className="flex items-center gap-2 text-xs text-white/40">
+                       {episodeWatched && (
+                         <Check size={14} className="text-[#E50914]" strokeWidth={3} aria-label="Watched" />
+                       )}
+                       <span>{ep.runtime || 45}m</span>
+                     </div>
                    </div>
-                   <div className="flex-1 space-y-1">
-                     <h4 className="font-bold text-sm">{ep.name}</h4>
-                     <p className="text-xs text-white/50 line-clamp-2">{ep.overview || 'No overview available.'}</p>
-                   </div>
-                   <div className="text-xs text-white/40">{ep.runtime || 45}m</div>
-                 </div>
-               ))}
+                 );
+               })}
              </div>
           </div>
         )}

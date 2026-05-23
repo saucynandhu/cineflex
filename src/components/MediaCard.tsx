@@ -22,6 +22,7 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<number | null>(null);
+  const closeTimer = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   
   const navigate = useNavigate();
@@ -30,7 +31,32 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   const mediaType = (type && type !== 'all') ? type : (item.type || item.media_type || (item.first_air_date ? 'tv' : 'movie'));
   const id = Number(item.tmdbId || item.id);
 
+  const getWatchPath = () => {
+    if (mediaType === 'tv') {
+      return `/watch/tv/${id}/${item.season || 1}/${item.episode || 1}`;
+    }
+    return `/watch/movie/${id}`;
+  };
+
+  const getDetailsPath = () => `/${mediaType}/${id}`;
+
+  const clearTimers = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  };
+
+  const closePopup = () => {
+    if (currentHoveredId === cardId.current) {
+      currentHoveredId = null;
+    }
+    setHovered(false);
+    setPopupReady(false);
+    clearTimers();
+  };
+
   const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
     currentHoveredId = cardId.current;
     setHovered(true);
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
@@ -51,21 +77,17 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
       }
       rafRef.current = requestAnimationFrame(loop);
     };
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
   };
 
   const handleMouseLeave = () => {
-    if (currentHoveredId === cardId.current) {
-      currentHoveredId = null;
-    }
-    setHovered(false);
-    setPopupReady(false);
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(closePopup, 120);
   };
 
   const handleClick = () => {
-    navigate(`/${mediaType}/${id}`);
+    navigate(listType === 'continue_watching' ? getWatchPath() : getDetailsPath());
   };
 
   const handleRemoveAction = (e: React.MouseEvent) => {
@@ -76,8 +98,12 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
     }
     if (listType === 'continue_watching') removeFromContinueWatching(id, mediaType);
     else if (listType === 'watch_later') removeFromWatchLater(id, mediaType);
-    else if (listType === 'watched') removeFromWatched(id, mediaType);
+    else if (listType === 'watched') removeFromWatched(id, mediaType, item.season, item.episode);
   };
+
+  useEffect(() => {
+    return () => clearTimers();
+  }, []);
 
   return (
     <>
@@ -178,6 +204,7 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
           }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onClick={(e) => e.stopPropagation()}
         >
           <style>{`
             @keyframes fadeInUp {
@@ -185,17 +212,13 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
               to { opacity: 1; transform: translateY(0); }
             }
           `}</style>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'between', marginBottom: '12px' }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (mediaType === 'tv') {
-                    navigate(`/watch/tv/${id}/${item.season || 1}/${item.episode || 1}`);
-                  } else {
-                    navigate(`/watch/movie/${id}`);
-                  }
+                  navigate(getWatchPath());
                 }}
                 style={{
                   width: '32px',
@@ -244,7 +267,7 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                handleClick();
+                navigate(getDetailsPath());
               }}
               style={{
                 width: '32px',
