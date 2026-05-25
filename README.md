@@ -34,7 +34,7 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 ### Installation
 1. **Clone the repo**:
    ```bash
-   git clone https://github.com/yourusername/cineflix.git
+   git clone https://github.com/saucynandhu/cineflix.git
    cd cineflix
    ```
 
