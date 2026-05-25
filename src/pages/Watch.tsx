@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as tmdb from '../lib/tmdb';
-import { SourceId } from '../components/SourceSwitcher';
+import { SourceId, SOURCES, getEmbedUrl } from '../lib/sources';
 import { useUserLists } from '../hooks/useUserLists';
+import { MediaDetails, Episode } from '../types/tmdb';
+import LoadingScreen from '../components/LoadingScreen';
 
 interface WatchProps {
   type: 'movie' | 'tv';
@@ -14,17 +16,15 @@ export default function Watch({ type }: WatchProps) {
   const { id, season, episode } = useParams();
   const navigate = useNavigate();
   const [source, setSource] = useState<SourceId>('videasy');
-  const [imdbId, setImdbId] = useState<string | null>(null);
-  const [mediaData, setMediaData] = useState<any>(null);
+  const [mediaData, setMediaData] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   
   // TV specific state
-  const [tvDetails, setTvDetails] = useState<any>(null);
-  const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<any[]>([]);
+  const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<Episode[]>([]);
   const currentEpisodeData = currentSeasonEpisodes.find(ep => ep.episode_number === Number(episode));
 
-  const { addToContinueWatching, addToWatched } = useUserLists();
+  const { addToContinueWatching, addToWatched, updateContinueWatching } = useUserLists();
 
   useEffect(() => {
     async function fetchDetailsAndRecordActivity() {
@@ -35,23 +35,19 @@ export default function Watch({ type }: WatchProps) {
           tmdb.getDetails(type, id)
         ]);
         
-        setImdbId(externalIds.imdb_id);
         setMediaData(details);
         
-        if (type === 'tv') {
-          setTvDetails(details);
-        }
-
         // Record activity
         const commonData = {
           id: details.id,
           tmdbId: details.id,
-          imdbId: externalIds.imdb_id,
+          imdbId: externalIds.imdb_id || undefined,
           type,
-          title: details.title || details.name,
+          title: details.title || details.name || '',
           posterPath: details.poster_path,
           backdropPath: details.backdrop_path,
           year: (details.release_date || details.first_air_date || '').split('-')[0],
+          addedAt: Date.now()
         };
 
         addToWatched({
@@ -59,7 +55,6 @@ export default function Watch({ type }: WatchProps) {
           watchedAt: Date.now(),
           season: type === 'tv' ? Number(season) : undefined,
           episode: type === 'tv' ? Number(episode) : undefined,
-          addedAt: Date.now()
         });
 
         addToContinueWatching({
@@ -67,8 +62,7 @@ export default function Watch({ type }: WatchProps) {
           watchedAt: Date.now(),
           season: type === 'tv' ? Number(season) : undefined,
           episode: type === 'tv' ? Number(episode) : undefined,
-          episodeName: type === 'tv' ? details.name : undefined,
-          addedAt: Date.now()
+          episodeName: undefined, // Will be updated once episode data is fetched
         });
 
       } catch (err) {
@@ -79,6 +73,19 @@ export default function Watch({ type }: WatchProps) {
     }
     fetchDetailsAndRecordActivity();
   }, [id, type, season, episode, addToContinueWatching, addToWatched]);
+
+  // Update continue watching with episode name once fetched
+  useEffect(() => {
+    if (type === 'tv' && id && currentEpisodeData?.name) {
+      updateContinueWatching(
+        Number(id), 
+        'tv', 
+        Number(season), 
+        Number(episode), 
+        currentEpisodeData.name
+      );
+    }
+  }, [id, type, season, episode, currentEpisodeData, updateContinueWatching]);
 
   useEffect(() => {
     async function fetchSeasonData() {
@@ -102,70 +109,6 @@ export default function Watch({ type }: WatchProps) {
     return () => clearTimeout(timer);
   }, [source, season, episode]);
 
-  const getEmbedUrl = () => {
-    const tmdbId = id;
-    const s = season || '1';
-    const e = episode || '1';
-
-    const patterns: Record<SourceId, { movie: string; tv: string }> = {
-      videasy: {
-        movie: `https://player.videasy.net/movie/${tmdbId}`,
-        tv: `https://player.videasy.net/tv/${tmdbId}/${s}/${e}`
-      },
-      vidlink: {
-        movie: `https://vidlink.pro/movie/${tmdbId}`,
-        tv: `https://vidlink.pro/tv/${tmdbId}/${s}/${e}`
-      },
-      vidfast: {
-        movie: `https://vidfast.pro/movie/${tmdbId}`,
-        tv: `https://vidfast.pro/tv/${tmdbId}/${s}/${e}`
-      },
-      autoembed: {
-        movie: `https://player.autoembed.cc/embed/movie/${tmdbId}`,
-        tv: `https://player.autoembed.cc/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      vidsrc_me: {
-        movie: `https://vidsrc.me/embed/movie/${tmdbId}`,
-        tv: `https://vidsrc.me/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      vidsrc_cc: {
-        movie: `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,
-        tv: `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      vidsrc_icu: {
-        movie: `https://vidsrc.icu/embed/movie/${tmdbId}`,
-        tv: `https://vidsrc.icu/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      vidsrc_vip: {
-        movie: `https://vidsrc.vip/embed/movie/${tmdbId}`,
-        tv: `https://vidsrc.vip/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      rivestream: {
-        movie: `https://rivestream.org/embed/movie/${tmdbId}`,
-        tv: `https://rivestream.org/embed/tv/${tmdbId}/${s}/${e}`
-      },
-      pstream: {
-        movie: `https://iframe.pstream.org/movie/${tmdbId}`,
-        tv: `https://iframe.pstream.org/tv/${tmdbId}/${s}/${e}`
-      },
-      twoembed: {
-        movie: `https://www.2embed.cc/embed/${tmdbId}`,
-        tv: `https://www.2embed.cc/embedtv/${tmdbId}&s=${s}&e=${e}`
-      },
-      superembed: {
-        movie: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`,
-        tv: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${s}&e=${e}`
-      },
-      autoembed_co: {
-        movie: `https://autoembed.co/movie/tmdb/${tmdbId}`,
-        tv: `https://autoembed.co/tv/tmdb/${tmdbId}-${s}-${e}`
-      }
-    };
-
-    const pattern = patterns[source];
-    return type === 'movie' ? pattern.movie : pattern.tv;
-  };
-
   const handlePrev = async () => {
     const s = Number(season);
     const e = Number(episode);
@@ -187,7 +130,7 @@ export default function Watch({ type }: WatchProps) {
       navigate(`/watch/tv/${id}/${s}/${e + 1}`);
     } else {
       const nextSeasonNum = s + 1;
-      const nextSeason = tvDetails?.seasons?.find((sn: any) => sn.season_number === nextSeasonNum);
+      const nextSeason = mediaData?.seasons?.find(sn => sn.season_number === nextSeasonNum);
       if (nextSeason) {
         navigate(`/watch/tv/${id}/${nextSeasonNum}/1`);
       }
@@ -198,15 +141,10 @@ export default function Watch({ type }: WatchProps) {
   const isLastEpisodeOfSeason = Number(episode) === currentSeasonEpisodes.length && currentSeasonEpisodes.length > 0;
   
   const nextSeasonNum = Number(season) + 1;
-  const hasNextSeason = tvDetails?.seasons?.some((sn: any) => sn.season_number === nextSeasonNum);
+  const hasNextSeason = mediaData?.seasons?.some(sn => sn.season_number === nextSeasonNum);
   const isLastEpisodeOfSeries = isLastEpisodeOfSeason && !hasNextSeason;
 
-  if (loading) return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
-      <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
-      <p className="text-gray-400 font-medium tracking-widest text-[10px] uppercase">Preparing your stream...</p>
-    </div>
-  );
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black overflow-hidden">
@@ -237,19 +175,9 @@ export default function Watch({ type }: WatchProps) {
              onChange={(e) => setSource(e.target.value as SourceId)}
              className="bg-transparent border border-white/30 text-white text-xs rounded-md px-3 py-1.5 outline-none cursor-pointer hover:border-white/50 transition-colors"
            >
-             <option value="videasy" className="bg-[#141414]">Videasy</option>
-             <option value="vidlink" className="bg-[#141414]">VidLink</option>
-             <option value="vidfast" className="bg-[#141414]">VidFast</option>
-             <option value="autoembed" className="bg-[#141414]">AutoEmbed</option>
-             <option value="vidsrc_me" className="bg-[#141414]">VidSrc.me</option>
-             <option value="vidsrc_cc" className="bg-[#141414]">VidSrc.cc</option>
-             <option value="vidsrc_icu" className="bg-[#141414]">VidSrc.icu</option>
-             <option value="vidsrc_vip" className="bg-[#141414]">VidSrc.vip</option>
-             <option value="rivestream" className="bg-[#141414]">Rivestream</option>
-             <option value="pstream" className="bg-[#141414]">Pstream</option>
-             <option value="twoembed" className="bg-[#141414]">2Embed</option>
-             <option value="superembed" className="bg-[#141414]">SuperEmbed</option>
-             <option value="autoembed_co" className="bg-[#141414]">AutoEmbed.co</option>
+             {SOURCES.map((src) => (
+               <option key={src.id} value={src.id} className="bg-[#141414]">{src.name}</option>
+             ))}
            </select>
         </div>
       </div>
@@ -257,7 +185,7 @@ export default function Watch({ type }: WatchProps) {
       {/* Iframe Area */}
       <div className="flex-1 relative overflow-hidden bg-black">
         <iframe
-          src={getEmbedUrl()}
+          src={getEmbedUrl(source, type, id!, season, episode)}
           className="w-full h-full border-none"
           allowFullScreen
           allow="autoplay; encrypted-media"
@@ -323,5 +251,3 @@ export default function Watch({ type }: WatchProps) {
     </div>
   );
 }
-
-

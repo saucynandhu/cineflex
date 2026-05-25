@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
-import { Play, Plus, ThumbsUp, ChevronDown, Clock, Star, Calendar, Loader2, Bookmark, BookmarkCheck, X, Film, Check } from 'lucide-react';
+import { Play, Plus, Star, Film, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import MediaRow from '../components/MediaRow';
-import MediaCard from '../components/MediaCard';
 import { useUserLists } from '../hooks/useUserLists';
 import { cn } from '../lib/utils';
+import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';
+import LoadingScreen from '../components/LoadingScreen';
 
 interface DetailProps {
   type: 'movie' | 'tv';
@@ -35,10 +35,10 @@ const StarRating = ({ rating }: { rating: number }) => {
 export default function Detail({ type }: DetailProps) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState<any>(null);
-  const [seasons, setSeasons] = useState<any[]>([]);
+  const [data, setData] = useState<MediaDetails | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
   const [collection, setCollection] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'more'>('overview');
@@ -64,12 +64,12 @@ export default function Detail({ type }: DetailProps) {
       try {
         const details = await tmdb.getDetails(type, id);
         setData(details);
-        if (type === 'tv') {
-          setSeasons(details.seasons.filter((s: any) => s.season_number > 0));
+        if (type === 'tv' && details.seasons) {
+          setSeasons(details.seasons.filter((s: Season) => s.season_number > 0));
         }
 
-        if (type === 'movie' && details.belongs_to_collection) {
-          const collectionData = await tmdb.getCollection(details.belongs_to_collection.id);
+        if (type === 'movie' && (details as any).belongs_to_collection) {
+          const collectionData = await tmdb.getCollection((details as any).belongs_to_collection.id);
           setCollection(collectionData);
         }
       } catch (err) {
@@ -95,13 +95,13 @@ export default function Detail({ type }: DetailProps) {
     fetchEpisodes();
   }, [id, type, selectedSeason]);
 
-  if (loading || !data) return <div className="pt-24 px-12 h-screen bg-[#141414]">Loading...</div>;
+  if (loading || !data) return <LoadingScreen />;
 
   // Trailer selection logic
   const videos = data.videos?.results || [];
-  const officialTrailer = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer' && v.official === true);
-  const anyTrailer = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer');
-  const officialTeaser = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Teaser' && v.official === true);
+  const officialTrailer = videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Trailer' && (v as any).official === true);
+  const anyTrailer = videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Trailer');
+  const officialTeaser = videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Teaser' && (v as any).official === true);
   
   const selectedVideo = officialTrailer || anyTrailer || officialTeaser || null;
 
@@ -131,13 +131,17 @@ export default function Detail({ type }: DetailProps) {
       <div className="relative z-10 -mt-48 max-w-6xl mx-auto px-6 md:px-12 flex flex-col md:flex-row gap-12">
         {/* Left Column */}
         <div className="flex-1 space-y-6">
-          <h1 className="text-4xl md:text-5xl font-black text-white">{data.title || data.name}</h1>
+          <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">{data.title || data.name}</h1>
           
           <div className="flex items-center gap-3 text-sm font-semibold text-white/70">
             <span className="text-white">{(data.release_date || data.first_air_date || '').split('-')[0]}</span>
-            <span className="border border-white/40 px-1 text-[10px]">16+</span>
-            <span>{type === 'movie' ? `${Math.floor(data.runtime / 60)}h ${data.runtime % 60}m` : `${data.number_of_seasons} Seasons`}</span>
-            <span className="border border-white/40 px-1 text-[10px]">HD</span>
+            <span className="border border-white/40 px-1 text-[10px] rounded-[2px]">16+</span>
+            <span>
+              {type === 'movie' 
+                ? `${Math.floor((data.runtime || 0) / 60)}h ${(data.runtime || 0) % 60}m` 
+                : `${data.number_of_seasons} Seasons`}
+            </span>
+            <span className="border border-white/40 px-1 text-[10px] rounded-[2px]">HD</span>
           </div>
 
           <div className="flex items-center gap-3 py-2 border-y border-white/10">
@@ -148,45 +152,58 @@ export default function Detail({ type }: DetailProps) {
             </div>
             <span className="text-xs text-white/40 italic">({data.vote_count.toLocaleString()})</span>
             {data.popularity > 100 && (
-              <span className="text-[10px] bg-[#E50914] text-white px-2 py-0.5 rounded-full font-bold">Trending</span>
+              <span className="text-[10px] bg-[#E50914] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Trending</span>
             )}
           </div>
 
-          <p className="text-sm md:text-base text-white/80 leading-relaxed line-clamp-4">
+          <p className="text-sm md:text-base text-white/80 leading-relaxed max-w-2xl">
             {data.overview}
           </p>
 
           <div className="flex flex-wrap gap-2">
-            {data.genres.map((g: any) => (
-              <span key={g.id} className="text-[10px] bg-white/10 text-white px-3 py-1 rounded-full font-medium">
+            {data.genres.map((g) => (
+              <span key={g.id} className="text-[10px] bg-white/10 text-white px-3 py-1 rounded-full font-bold uppercase tracking-wider">
                 {g.name}
               </span>
             ))}
           </div>
 
           {type === 'tv' && cwItem && (
-            <div className="space-y-2">
-              <p className="text-xs text-white/60">Continue watching: S{cwItem.season} E{cwItem.episode} · {cwItem.episodeName || 'Episode Name'}</p>
+            <div className="bg-white/5 border-l-4 border-[#E50914] p-3 rounded">
+              <p className="text-xs text-white/80 font-bold uppercase tracking-wider mb-1">Continue watching</p>
+              <p className="text-sm text-white font-medium">S{cwItem.season} E{cwItem.episode} · {cwItem.episodeName || 'Next Episode'}</p>
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible pt-4">
             <button 
               onClick={handlePlay} 
-              className="flex-1 sm:flex-none bg-[#E50914] text-white px-10 py-3 rounded font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-white text-black px-10 py-3 rounded font-black hover:bg-white/80 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
             >
-              <Play size={20} fill="white" /> Watch Now
+              <Play size={24} fill="black" /> Play
             </button>
             <button 
-              onClick={() => toggleWatchLater({ id: data.id, tmdbId: data.id, type, title: data.title || data.name, posterPath: data.poster_path, backdropPath: data.backdrop_path, year: (data.release_date || data.first_air_date || '').split('-')[0], addedAt: Date.now() })}
-              className={cn("flex-1 sm:flex-none px-10 py-3 rounded font-bold transition-all border flex items-center justify-center gap-2", isInWatchLater(data.id, type) ? "bg-white text-black border-white" : "text-white border-white/50 hover:border-white")}
+              onClick={() => toggleWatchLater({ 
+                id: data.id, 
+                tmdbId: data.id, 
+                type, 
+                title: data.title || data.name || '', 
+                posterPath: data.poster_path, 
+                backdropPath: data.backdrop_path, 
+                year: (data.release_date || data.first_air_date || '').split('-')[0], 
+                addedAt: Date.now() 
+              })}
+              className={cn(
+                "flex-1 sm:flex-none px-10 py-3 rounded font-black transition-all border flex items-center justify-center gap-2 uppercase tracking-tight", 
+                isInWatchLater(data.id, type) ? "bg-white/20 text-white border-white/20" : "text-white border-white/40 hover:border-white"
+              )}
             >
               {isInWatchLater(data.id, type) ? <Check size={20} /> : <Plus size={20} />} My List
             </button>
             {selectedVideo && (
               <button 
                 onClick={() => setActiveTrailer(selectedVideo.key)} 
-                className="flex-1 sm:flex-none border border-white/50 text-white px-6 py-3 rounded font-bold hover:border-white transition-all flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none border border-white/40 text-white px-8 py-3 rounded font-black hover:border-white transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
               >
                 <Film size={20} /> Trailer
               </button>
@@ -195,7 +212,7 @@ export default function Detail({ type }: DetailProps) {
         </div>
 
         {/* Right Column (Poster) */}
-        <div className="hidden md:block w-[300px]">
+        <div className="hidden md:block w-[280px] shrink-0">
           <img
             src={getImageUrl(data.poster_path, 'w500')}
             alt={data.title || data.name}
@@ -205,14 +222,14 @@ export default function Detail({ type }: DetailProps) {
       </div>
 
       {/* Tabs */}
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mt-12">
-        <div className="flex gap-8 border-b border-white/10 mb-8">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 mt-16 pb-20">
+        <div className="flex gap-8 border-b border-white/10 mb-8 overflow-x-auto no-scrollbar">
           {['overview', type === 'tv' ? 'episodes' : null, 'more'].filter(Boolean).map((tab) => (
             <button
-              key={tab}
+              key={tab!}
               onClick={() => setActiveTab(tab as any)}
               className={cn(
-                "pb-4 text-sm font-bold transition-all border-b-2",
+                "pb-4 text-sm font-black uppercase tracking-widest transition-all border-b-[3px] whitespace-nowrap",
                 activeTab === tab ? "text-white border-[#E50914]" : "text-white/40 border-transparent hover:text-white"
               )}
             >
@@ -221,29 +238,37 @@ export default function Detail({ type }: DetailProps) {
           ))}
         </div>
 
-        {activeTab === 'overview' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Cast</h3>
+        {activeTab === 'overview' && data.credits && (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest border-l-4 border-[#E50914] pl-3">Top Cast</h3>
               <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4">
-                {data.credits.cast.slice(0, 15).map((person: any) => (
-                  <div key={person.id} className="flex-none w-16 text-center space-y-2">
-                    {person.profile_path ? (
-                      <img src={getImageUrl(person.profile_path, 'w500')} className="w-16 h-16 rounded-full object-cover" alt={person.name} />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-[#333] flex items-center justify-center text-white/20">?</div>
-                    )}
-                    <p className="text-[10px] text-white font-medium line-clamp-1">{person.name}</p>
-                    <p className="text-[8px] text-white/40 line-clamp-1">{person.character}</p>
+                {data.credits.cast.slice(0, 15).map((person) => (
+                  <div key={person.id} className="flex-none w-20 text-center space-y-3">
+                    <div className="relative group">
+                      {person.profile_path ? (
+                        <img 
+                          src={getImageUrl(person.profile_path, 'w500')} 
+                          className="w-20 h-20 rounded-full object-cover border-2 border-transparent group-hover:border-[#E50914] transition-all" 
+                          alt={person.name} 
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-[#333] flex items-center justify-center text-white/20 font-black text-xl">?</div>
+                      )}
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-white font-black line-clamp-1">{person.name}</p>
+                      <p className="text-[9px] text-white/40 line-clamp-1 italic">{person.character}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {type === 'movie' && collection && (
-              <div className="bg-white/5 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-3">{collection.name}</h3>
-                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+              <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+                <h3 className="text-lg font-black text-white uppercase tracking-widest mb-6">{collection.name}</h3>
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                   {collection.parts
                     .filter((part: any) => part.poster_path)
                     .sort((a: any, b: any) => (a.release_date || '').localeCompare(b.release_date || ''))
@@ -255,12 +280,12 @@ export default function Detail({ type }: DetailProps) {
                           key={part.id}
                           onClick={() => !isCurrent && navigate(`/movie/${part.id}`)}
                           className={cn(
-                            "flex-none w-20 md:w-24 cursor-pointer relative group",
-                            isCurrent ? "cursor-default" : "opacity-70 hover:opacity-100 transition-opacity"
+                            "flex-none w-24 md:w-32 cursor-pointer relative group",
+                            isCurrent ? "cursor-default" : "opacity-60 hover:opacity-100 transition-opacity"
                           )}
                         >
                           <div className={cn(
-                            "aspect-[2/3] rounded overflow-hidden relative",
+                            "aspect-[2/3] rounded overflow-hidden relative shadow-lg",
                             isCurrent && "border-2 border-[#E50914]"
                           )}>
                             <img 
@@ -269,12 +294,12 @@ export default function Detail({ type }: DetailProps) {
                               className="w-full h-full object-cover"
                             />
                             {isCurrent && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-[#E50914] text-white text-[10px] text-center py-0.5 font-bold">
-                                Now Watching
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <span className="bg-[#E50914] text-white text-[8px] font-black px-2 py-0.5 uppercase tracking-tighter">Current</span>
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] text-white font-medium mt-1 line-clamp-1">{part.title}</p>
+                          <p className="text-[10px] text-white font-bold mt-2 line-clamp-1">{part.title}</p>
                           <p className="text-[10px] text-white/40">{releaseYear}</p>
                         </div>
                       );
@@ -286,14 +311,18 @@ export default function Detail({ type }: DetailProps) {
         )}
 
         {activeTab === 'episodes' && (
-          <div className="space-y-6 animate-fade-in">
-             <div className="flex items-center justify-between mb-4">
-               <h3 className="text-lg font-bold">Episodes</h3>
-               <select value={selectedSeason} onChange={(e) => setSelectedSeason(Number(e.target.value))} className="bg-[#222] text-white px-4 py-1.5 rounded border border-white/10 outline-none text-sm">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center justify-between">
+               <h3 className="text-sm font-black text-white uppercase tracking-widest border-l-4 border-[#E50914] pl-3">Episodes</h3>
+               <select 
+                value={selectedSeason} 
+                onChange={(e) => setSelectedSeason(Number(e.target.value))} 
+                className="bg-[#181818] text-white px-4 py-2 rounded border border-white/20 outline-none text-xs font-bold uppercase tracking-wider focus:border-white transition-colors"
+               >
                  {seasons.map(s => <option key={s.id} value={s.season_number}>Season {s.season_number}</option>)}
                </select>
              </div>
-             <div className="space-y-4">
+             <div className="grid grid-cols-1 gap-1">
                {episodes.map(ep => {
                  const episodeWatched = isEpisodeWatched(selectedSeason, ep.episode_number);
                  return (
@@ -301,32 +330,34 @@ export default function Detail({ type }: DetailProps) {
                      key={ep.id}
                      onClick={() => navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)}
                      className={cn(
-                       "flex gap-4 p-4 rounded hover:bg-white/5 cursor-pointer group",
-                       episodeWatched && "bg-white/[0.03]"
+                       "flex flex-col md:flex-row gap-6 p-6 rounded-lg transition-all border border-transparent hover:border-white/20 hover:bg-white/5 cursor-pointer group",
+                       episodeWatched && "bg-white/[0.02]"
                      )}
                    >
-                     <div className="relative w-40 aspect-video rounded overflow-hidden flex-none">
-                       <img src={getImageUrl(ep.still_path, 'w500')} className="w-full h-full object-cover" alt="" />
-                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Play size={24} fill="white" /></div>
-                       <span className="absolute top-2 left-2 text-xl font-black text-white/50">{ep.episode_number}</span>
+                     <div className="relative w-full md:w-56 aspect-video rounded overflow-hidden flex-none shadow-lg">
+                       <img 
+                        src={getImageUrl(ep.still_path || data.backdrop_path, 'w500')} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        alt="" 
+                       />
+                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Play size={32} fill="white" />
+                       </div>
+                       <span className="absolute top-3 left-3 text-2xl font-black text-white/50">{ep.episode_number}</span>
                        {episodeWatched && (
-                         <span
-                           title="Watched"
-                           className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E50914] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                         >
-                           <Check size={14} strokeWidth={3} />
-                         </span>
+                         <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#E50914] text-white flex items-center justify-center shadow-lg">
+                           <Check size={18} strokeWidth={3} />
+                         </div>
                        )}
                      </div>
-                     <div className="flex-1 space-y-1">
-                       <h4 className="font-bold text-sm">{ep.name}</h4>
-                       <p className="text-xs text-white/50 line-clamp-2">{ep.overview || 'No overview available.'}</p>
-                     </div>
-                     <div className="flex items-center gap-2 text-xs text-white/40">
-                       {episodeWatched && (
-                         <Check size={14} className="text-[#E50914]" strokeWidth={3} aria-label="Watched" />
-                       )}
-                       <span>{ep.runtime || 45}m</span>
+                     <div className="flex-1 flex flex-col justify-center">
+                       <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-black text-lg text-white">{ep.name}</h4>
+                        <span className="text-xs font-bold text-white/40">{ep.runtime || 45}m</span>
+                       </div>
+                       <p className="text-sm text-white/60 leading-relaxed line-clamp-3 md:line-clamp-2">
+                        {ep.overview || 'No overview available for this episode.'}
+                       </p>
                      </div>
                    </div>
                  );
@@ -336,33 +367,30 @@ export default function Detail({ type }: DetailProps) {
         )}
 
         {activeTab === 'more' && (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 pb-20 animate-fade-in">
-            {(data.recommendations?.results || []).map((item: any) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {(data.recommendations?.results || []).slice(0, 12).map((item: MediaBase) => (
               <div 
                 key={item.id}
                 onClick={() => navigate(`/${item.media_type || type}/${item.id}`)}
-                style={{ 
-                  width: '100%', 
-                  aspectRatio: '16/9', 
-                  cursor: 'pointer',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  backgroundColor: '#141414'
-                }}
-                className="group"
+                className="group cursor-pointer space-y-3"
               >
-                <img
-                  src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
-                  alt={item.title || item.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                {/* Simple hover overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 
-                  transition-all duration-300 flex items-end p-3">
-                  <p className="text-white text-xs font-semibold opacity-0 
-                    group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
+                <div className="aspect-video rounded-md overflow-hidden bg-[#181818] border border-white/5 relative shadow-md">
+                  <img
+                    src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
+                    alt={item.title || item.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Play size={32} fill="white" className="scale-75 group-hover:scale-100 transition-transform duration-300" />
+                  </div>
+                </div>
+                <div className="px-1">
+                  <p className="text-xs font-black text-white truncate uppercase tracking-tighter">
                     {item.title || item.name}
+                  </p>
+                  <p className="text-[10px] text-white/40 font-bold uppercase">
+                    {( (item as any).release_date || (item as any).first_air_date || '').split('-')[0]}
                   </p>
                 </div>
               </div>
@@ -371,13 +399,29 @@ export default function Detail({ type }: DetailProps) {
         )}
       </div>
 
-      {/* Trailer Modal (re-using logic but styled) */}
+      {/* Trailer Modal */}
       <AnimatePresence>
         {activeTrailer && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveTrailer(null)} className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center p-4">
-            <div className="relative w-full max-w-4xl aspect-video bg-black rounded shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setActiveTrailer(null)} className="absolute top-4 right-4 text-white hover:text-red-500 z-10"><X size={32} /></button>
-              <iframe src={`https://www.youtube.com/embed/${activeTrailer}?autoplay=1`} className="w-full h-full" allow="autoplay; fullscreen" />
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={() => setActiveTrailer(null)} 
+            className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+          >
+            <div className="relative w-full max-w-5xl aspect-video bg-black rounded-lg shadow-2xl overflow-hidden border border-white/10" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={() => setActiveTrailer(null)} 
+                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10 bg-black/50 p-2 rounded-full"
+              >
+                <X size={24} />
+              </button>
+              <iframe 
+                src={`https://www.youtube.com/embed/${activeTrailer}?autoplay=1`} 
+                className="w-full h-full" 
+                allow="autoplay; fullscreen" 
+                title="Trailer"
+              />
             </div>
           </motion.div>
         )}

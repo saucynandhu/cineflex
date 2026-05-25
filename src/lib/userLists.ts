@@ -23,6 +23,9 @@ export interface WatchedItem extends ListItem {
   episode?: number;
 }
 
+const STORAGE_VERSION_KEY = 'cineflix_storage_version';
+const CURRENT_STORAGE_VERSION = 2;
+
 const CONTINUE_WATCHING_KEY = 'cineflix_continue_watching';
 const WATCH_LATER_KEY = 'cineflix_watch_later';
 const WATCHED_KEY = 'cineflix_watched';
@@ -30,6 +33,41 @@ const WATCHED_KEY = 'cineflix_watched';
 const MAX_CONTINUE_WATCHING = 20;
 const MAX_WATCH_LATER = 100;
 const MAX_WATCHED = 200;
+
+/**
+ * Basic migration logic to handle schema changes.
+ */
+function migrate() {
+  if (typeof window === 'undefined' || !window.localStorage || typeof window.localStorage.getItem !== 'function') return;
+  const version = Number(window.localStorage.getItem(STORAGE_VERSION_KEY) || '1');
+  
+  if (version < 2) {
+    // Migration from v1 to v2: Ensure all items have tmdbId (using id as fallback)
+    [CONTINUE_WATCHING_KEY, WATCH_LATER_KEY, WATCHED_KEY].forEach(key => {
+      const data = window.localStorage.getItem(key);
+      if (data) {
+        try {
+          const list = JSON.parse(data);
+          if (Array.isArray(list)) {
+            const updated = list.map(item => ({
+              ...item,
+              tmdbId: item.tmdbId || item.id
+            }));
+            window.localStorage.setItem(key, JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.error(`Migration error for ${key}:`, e);
+        }
+      }
+    });
+    window.localStorage.setItem(STORAGE_VERSION_KEY, String(CURRENT_STORAGE_VERSION));
+  }
+}
+
+// Run migration on load
+if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.getItem === 'function') {
+  migrate();
+}
 
 function getStorageItem<T>(key: string, defaultValue: T): T {
   try {
@@ -91,12 +129,13 @@ export const removeFromContinueWatching = (tmdbId: number, type: 'movie' | 'tv')
   setStorageItem(CONTINUE_WATCHING_KEY, list);
 };
 
-export const updateContinueWatching = (tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number): void => {
+export const updateContinueWatching = (tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number, episodeName?: string): void => {
   const list = getContinueWatching();
   const item = list.find(i => (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type);
   if (item) {
-    item.season = season;
-    item.episode = episode;
+    if (season !== undefined) item.season = season;
+    if (episode !== undefined) item.episode = episode;
+    if (episodeName !== undefined) item.episodeName = episodeName;
     item.watchedAt = Date.now();
     // Move to front
     const filtered = list.filter(i => !( (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type));

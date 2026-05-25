@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Play, Plus, ChevronDown, Check, X } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
+import { cn } from '../lib/utils';
 
 let currentHoveredId: string | null = null;
 
@@ -31,14 +32,14 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   const mediaType = (type && type !== 'all') ? type : (item.type || item.media_type || (item.first_air_date ? 'tv' : 'movie'));
   const id = Number(item.tmdbId || item.id);
 
-  const getWatchPath = () => {
+  const getWatchPath = useCallback(() => {
     if (mediaType === 'tv') {
       return `/watch/tv/${id}/${item.season || 1}/${item.episode || 1}`;
     }
     return `/watch/movie/${id}`;
-  };
+  }, [id, mediaType, item.season, item.episode]);
 
-  const getDetailsPath = () => `/${mediaType}/${id}`;
+  const getDetailsPath = useCallback(() => `/${mediaType}/${id}`, [id, mediaType]);
 
   const clearTimers = () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
@@ -46,14 +47,14 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     if (currentHoveredId === cardId.current) {
       currentHoveredId = null;
     }
     setHovered(false);
     setPopupReady(false);
     clearTimers();
-  };
+  }, []);
 
   const handleMouseEnter = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -70,10 +71,20 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
       if (cardRef.current) {
         const rect = cardRef.current.getBoundingClientRect();
         const vw = window.innerWidth;
+        const vh = window.innerHeight;
         let left = rect.left;
+        let top = rect.bottom;
+        
+        // Horizontal adjustment
         if (left + rect.width > vw - 8) left = vw - rect.width - 8;
         if (left < 8) left = 8;
-        setPopupPos({ x: left, y: rect.bottom, width: rect.width });
+        
+        // Vertical adjustment (if too close to bottom, show above)
+        if (top + 160 > vh - 20) {
+          top = rect.top - 160;
+        }
+
+        setPopupPos({ x: left, y: top, width: rect.width });
       }
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -88,6 +99,15 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
 
   const handleClick = () => {
     navigate(listType === 'continue_watching' ? getWatchPath() : getDetailsPath());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    } else if (e.key === 'Escape') {
+      closePopup();
+    }
   };
 
   const handleRemoveAction = (e: React.MouseEvent) => {
@@ -107,100 +127,65 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
 
   return (
     <>
-      {/* OUTER — handles hover detection, position reference, z-index */}
       <div
         ref={cardRef}
-        className="relative flex-none cursor-pointer"
+        role="button"
+        tabIndex={0}
+        aria-label={`${item.title || item.name} details`}
+        className={cn(
+          "relative flex-none cursor-pointer transition-all duration-400 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
+          hovered ? "z-[50]" : "z-[1]"
+        )}
         style={{
           width: 'clamp(160px, 20vw, 240px)',
           aspectRatio: '16/9',
-          zIndex: hovered ? 50 : 1,
         }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onKeyDown={handleKeyDown}
         onClick={handleClick}
       >
-        {/* X REMOVE BUTTON — child of outer, never affected by scale */}
         {(listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
           <button
             onClick={handleRemoveAction}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              zIndex: 30,
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.7)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              opacity: hovered ? 1 : 0,
-              transition: 'opacity 0.2s ease, background 0.2s ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(229,9,20,0.8)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.7)'}
+            className={cn(
+              "absolute top-2 right-2 z-[30] w-6 h-6 rounded-full bg-black/70 border border-white/30 text-white flex items-center justify-center cursor-pointer transition-all hover:bg-red-600/80",
+              hovered ? "opacity-100" : "opacity-0"
+            )}
+            title="Remove from list"
           >
             <X size={14} />
           </button>
         )}
 
-        {/* INNER SCALE WRAPPER — ONLY this element scales */}
         <div
-          style={{
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden',
-            borderRadius: '4px',
-            transform: hovered ? 'scale(1.05)' : 'scale(1)',
-            transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            willChange: 'transform',
-            backgroundColor: '#141414',
-          }}
+          className={cn(
+            "w-full h-full overflow-hidden rounded-[4px] bg-[#141414] transition-transform duration-400 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
+            hovered ? "scale-105" : "scale-100"
+          )}
         >
           <img
             src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
             alt={item.title || item.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            className="w-full h-full object-cover block"
+            loading="lazy"
           />
         </div>
 
-        {/* EPISODE LABEL for Continue Watching TV shows */}
         {listType === 'continue_watching' && item.type === 'tv' && item.season && (
-          <div style={{
-            position: 'absolute',
-            bottom: '8px',
-            left: '8px',
-            zIndex: 20,
-            fontSize: '11px',
-            fontWeight: 'bold',
-            color: 'white',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-            pointerEvents: 'none',
-          }}>
+          <div className="absolute bottom-2 left-2 z-[20] text-[11px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] pointer-events-none">
             S{item.season}E{item.episode}
           </div>
         )}
       </div>
 
-      {/* PORTAL POPUP — completely outside the card DOM tree */}
       {popupReady && currentHoveredId === cardId.current && createPortal(
         <div
+          className="fixed z-[9999] bg-[#181818] rounded-b-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.8)] p-3 animate-[fadeInUp_0.2s_ease-out_forwards]"
           style={{
-            position: 'fixed',
             top: popupPos.y,
             left: popupPos.x,
             width: popupPos.width,
-            zIndex: 9999,
-            background: '#181818',
-            borderRadius: '0 0 6px 6px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.8)',
-            padding: '12px',
-            animation: 'fadeInUp 0.2s ease-out forwards',
           }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -213,26 +198,17 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
             }
           `}</style>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex gap-2">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(getWatchPath());
                 }}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
+                className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-none cursor-pointer hover:bg-white/80 transition-colors"
+                title="Play"
               >
-                <Play size={18} fill="black" style={{ marginLeft: '2px' }} />
+                <Play size={18} fill="black" className="ml-0.5" />
               </button>
               <button 
                 onClick={(e) => {
@@ -248,18 +224,8 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
                     addedAt: Date.now()
                   });
                 }}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '2px solid rgba(255,255,255,0.5)',
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-2 border-white/50 text-white cursor-pointer hover:border-white transition-colors"
+                title={isInWatchLater(id, mediaType) ? "Remove from My List" : "Add to My List"}
               >
                 {isInWatchLater(id, mediaType) ? <Check size={18} /> : <Plus size={18} />}
               </button>
@@ -269,35 +235,29 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
                 e.stopPropagation();
                 navigate(getDetailsPath());
               }}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid rgba(255,255,255,0.5)',
-                color: 'white',
-                marginLeft: 'auto',
-                cursor: 'pointer'
-              }}
+              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-2 border-white/50 text-white cursor-pointer hover:border-white transition-colors ml-auto"
+              title="More info"
             >
               <ChevronDown size={18} />
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span style={{ color: '#46d369', fontSize: '12px', fontWeight: 'bold' }}>98% Match</span>
-            <span style={{ color: 'white', fontSize: '12px' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[#46d369] text-xs font-bold">98% Match</span>
+            <span className="text-white text-xs">
               {(item.release_date || item.first_air_date || item.year || '').split('-')[0]}
             </span>
-            <span style={{ border: '1px solid rgba(255,255,255,0.4)', padding: '0 4px', fontSize: '10px', color: 'white' }}>HD</span>
+            <span className="border border-white/40 px-1 text-[10px] text-white rounded-[2px]">HD</span>
           </div>
 
-          <h3 style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <h3 className="text-white text-sm font-bold truncate">
             {item.title || item.name}
           </h3>
+          {listType === 'continue_watching' && item.episodeName && (
+             <p className="text-gray-400 text-[10px] font-medium mt-1 truncate">
+               {item.episodeName}
+             </p>
+          )}
         </div>,
         document.body
       )}

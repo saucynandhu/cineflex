@@ -43,8 +43,8 @@ export function useUserLists() {
     triggerUpdate();
   }, [triggerUpdate]);
 
-  const updateContinueWatching = useCallback((tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
-    lists.updateContinueWatching(tmdbId, type, season, episode);
+  const updateContinueWatching = useCallback((tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number, episodeName?: string) => {
+    lists.updateContinueWatching(tmdbId, type, season, episode, episodeName);
     triggerUpdate();
   }, [triggerUpdate]);
 

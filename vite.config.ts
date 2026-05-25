@@ -19,5 +19,11 @@ export default defineConfig(({mode}) => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    test: {
+      globals: true,
+      environment: 'happy-dom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      setupFiles: ['./src/test/setup.ts'],
+    },
   };
 });
