@@ -174,6 +174,13 @@ export default function Navbar() {
               >
                 My List
               </Link>
+              <Link
+                to="/ads"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-xl py-2 border-l-4 pl-4 border-transparent text-white/70"
+              >
+                About Ads
+              </Link>
 
               <button 
                 onClick={handleSurprise}

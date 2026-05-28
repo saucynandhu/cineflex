@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Heart } from 'lucide-react';
+import { Heart, ShieldAlert } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -17,10 +17,14 @@ const Footer = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-[#808080] text-[10px] md:text-xs font-medium">
+        <div className="flex items-center gap-6 text-[#808080] text-[10px] md:text-xs font-medium">
           <span className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
             <Heart size={14} className="text-[#E50914]" />
             <a href="/donate">Support Me</a>
+          </span>
+          <span className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
+            <ShieldAlert size={14} className="text-[#E50914]" />
+            <a href="/ads">About Ads</a>
           </span>
         </div>
       </div>
