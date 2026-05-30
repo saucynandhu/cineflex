@@ -61,6 +61,19 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
 
   const handleMouseEnter = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    
+    // Check if card is visible enough within its parent row
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const parent = cardRef.current.closest('.overflow-x-auto');
+      if (parent) {
+        const pRect = parent.getBoundingClientRect();
+        const visibleWidth = Math.min(rect.right, pRect.right) - Math.max(rect.left, pRect.left);
+        const visibility = visibleWidth / rect.width;
+        if (visibility < 0.6) return; // Don't trigger if less than 60% visible
+      }
+    }
+
     currentHoveredId = cardId.current;
     setHovered(true);
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
@@ -80,6 +93,18 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         
+        // Check visibility during scroll - if it goes too far off edge, close it
+        const parent = cardRef.current.closest('.overflow-x-auto');
+        if (parent) {
+          const pRect = parent.getBoundingClientRect();
+          const visibleWidth = Math.min(rect.right, pRect.right) - Math.max(rect.left, pRect.left);
+          const visibility = visibleWidth / rect.width;
+          if (visibility < 0.5) {
+            closePopup();
+            return;
+          }
+        }
+
         // Account for the 1.05x scale of the card
         const scale = 1.05;
         const scaledWidth = rect.width * scale;
