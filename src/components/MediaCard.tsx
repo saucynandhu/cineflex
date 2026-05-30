@@ -69,31 +69,55 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
         setPopupReady(true);
       }
     }, 150);
+  };
 
-    const loop = () => {
+  useEffect(() => {
+    if (!popupReady) return;
+
+    const updatePosition = () => {
       if (cardRef.current) {
         const rect = cardRef.current.getBoundingClientRect();
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        let left = rect.left;
-        let top = rect.bottom;
+        
+        // Account for the 1.05x scale of the card
+        const scale = 1.05;
+        const scaledWidth = rect.width * scale;
+        const scaledHeight = rect.height * scale;
+        const offsetX = (scaledWidth - rect.width) / 2;
+        const offsetY = (scaledHeight - rect.height) / 2;
+
+        let left = rect.left - offsetX;
+        let top = rect.bottom + offsetY;
         
         // Horizontal adjustment
-        if (left + rect.width > vw - 8) left = vw - rect.width - 8;
+        if (left + scaledWidth > vw - 8) left = vw - scaledWidth - 8;
         if (left < 8) left = 8;
         
         // Vertical adjustment (if too close to bottom, show above)
+        // 160 is approx popup height
         if (top + 160 > vh - 20) {
-          top = rect.top - 160;
+          top = rect.top - offsetY - 160;
         }
 
-        setPopupPos({ x: left, y: top, width: rect.width });
+        setPopupPos((prev) => {
+          if (prev.x === left && prev.y === top && prev.width === scaledWidth) return prev;
+          return { x: left, y: top, width: scaledWidth };
+        });
       }
-      rafRef.current = requestAnimationFrame(loop);
+      rafRef.current = requestAnimationFrame(updatePosition);
     };
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(loop);
-  };
+
+    rafRef.current = requestAnimationFrame(updatePosition);
+    window.addEventListener('scroll', updatePosition, { capture: true, passive: true });
+    window.addEventListener('resize', updatePosition, { passive: true });
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('scroll', updatePosition, { capture: true });
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [popupReady]);
 
   const handleMouseLeave = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
