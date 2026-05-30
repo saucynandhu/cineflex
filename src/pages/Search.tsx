@@ -22,7 +22,7 @@ export default function Search() {
       setLoading(true);
       try {
         const data = await tmdb.searchMulti(query);
-        setResults(data.filter((item: MediaBase) => item.media_type !== 'person' && (item.poster_path || item.backdrop_path)));
+        setResults(data.filter((item: MediaBase) => (item.media_type as string) !== 'person' && (item.poster_path || item.backdrop_path)));
       } catch (err) {
         console.error(err);
       } finally {

@@ -38,7 +38,7 @@ api.interceptors.request.use((config) => {
 
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/';
 
-export const getImageUrl = (path: string | null | undefined, size: 'w500' | 'original' = 'w500') => {
+export const getImageUrl = (path: string | null | undefined, size: 'w92' | 'w500' | 'original' = 'w500') => {
   if (!path) return 'https://via.placeholder.com/500x750?text=No+Image';
   return `${TMDB_IMAGE_BASE}${size}${path}`;
 };

@@ -46,7 +46,7 @@ export default function Watch({ type }: WatchProps) {
           title: details.title || details.name || '',
           posterPath: details.poster_path,
           backdropPath: details.backdrop_path,
-          year: (details.release_date || details.first_air_date || '').split('-')[0],
+          year: ((details as any).release_date || (details as any).first_air_date || '').split('-')[0],
           addedAt: Date.now()
         };
 

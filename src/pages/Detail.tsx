@@ -134,7 +134,7 @@ export default function Detail({ type }: DetailProps) {
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">{data.title || data.name}</h1>
           
           <div className="flex items-center gap-3 text-sm font-semibold text-white/70">
-            <span className="text-white">{(data.release_date || data.first_air_date || '').split('-')[0]}</span>
+            <span className="text-white">{((data as any).release_date || (data as any).first_air_date || '').split('-')[0]}</span>
             <span className="border border-white/40 px-1 text-[10px] rounded-[2px]">16+</span>
             <span>
               {type === 'movie' 
@@ -190,7 +190,7 @@ export default function Detail({ type }: DetailProps) {
                 title: data.title || data.name || '', 
                 posterPath: data.poster_path, 
                 backdropPath: data.backdrop_path, 
-                year: (data.release_date || data.first_air_date || '').split('-')[0], 
+                year: ((data as any).release_date || (data as any).first_air_date || '').split('-')[0], 
                 addedAt: Date.now() 
               })}
               className={cn(
@@ -353,7 +353,7 @@ export default function Detail({ type }: DetailProps) {
                      <div className="flex-1 flex flex-col justify-center">
                        <div className="flex items-center gap-3 mb-2">
                         <h4 className="font-black text-lg text-white">{ep.name}</h4>
-                        <span className="text-xs font-bold text-white/40">{ep.runtime || 45}m</span>
+                        <span className="text-xs font-bold text-white/40">{(ep as any).runtime || 45}m</span>
                        </div>
                        <p className="text-sm text-white/60 leading-relaxed line-clamp-3 md:line-clamp-2">
                         {ep.overview || 'No overview available for this episode.'}
