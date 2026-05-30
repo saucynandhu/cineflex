@@ -36,7 +36,7 @@ export default function Search() {
 
   return (
     <div className="pt-24 min-h-screen bg-[#141414] px-4 md:px-12">
-      <div className="flex items-center bg-[#181818] border border-white/10 rounded-md mb-8 sticky top-24 z-30 transition-all focus-within:border-white/30 shadow-xl">
+      <div className="flex items-center bg-[#181818] border border-white/10 rounded-md mb-8 transition-all focus-within:border-white/30 shadow-xl">
         <SearchIcon className="ml-4 text-white/40" size={20} />
         <input
           type="text"

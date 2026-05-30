@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
-import { Play, Plus, Star, Film, Check, X } from 'lucide-react';
+import { Play, Plus, Star, Film, Check, X, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUserLists } from '../hooks/useUserLists';
-import { cn } from '../lib/utils';
+import { cn, isUpcoming, formatDate } from '../lib/utils';
 import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
 
@@ -46,6 +46,9 @@ export default function Detail({ type }: DetailProps) {
 
   const { isInWatchLater, toggleWatchLater, continueWatching, watched } = useUserLists();
   const cwItem = continueWatching.find(i => String(i.tmdbId || i.id) === String(id));
+  
+  const releaseDate = data ? (data as any).release_date || (data as any).first_air_date : undefined;
+  const upcoming = isUpcoming(releaseDate);
 
   const isEpisodeWatched = useCallback((seasonNumber: number, episodeNumber: number) => {
     return watched.some(item =>
@@ -176,12 +179,19 @@ export default function Detail({ type }: DetailProps) {
           )}
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 overflow-visible pt-4">
-            <button 
-              onClick={handlePlay} 
-              className="flex-1 sm:flex-none bg-white text-black px-10 py-3 rounded font-black hover:bg-white/80 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
-            >
-              <Play size={24} fill="black" /> Play
-            </button>
+            {upcoming ? (
+              <div className="flex-1 sm:flex-none bg-white/10 border border-white/20 text-white px-8 py-3 rounded font-black flex items-center justify-center gap-3 uppercase tracking-tight">
+                <Calendar size={24} className="text-[#E50914]" />
+                Available on {formatDate(releaseDate)}
+              </div>
+            ) : (
+              <button 
+                onClick={handlePlay} 
+                className="flex-1 sm:flex-none bg-white text-black px-10 py-3 rounded font-black hover:bg-white/80 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
+              >
+                <Play size={24} fill="black" /> Play
+              </button>
+            )}
             <button 
               onClick={() => toggleWatchLater({ 
                 id: data.id, 

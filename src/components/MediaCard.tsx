@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Play, Plus, ChevronDown, Check, X } from 'lucide-react';
+import { Play, Plus, ChevronDown, Check, X, Calendar } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
-import { cn } from '../lib/utils';
+import { cn, isUpcoming } from '../lib/utils';
 
 let currentHoveredId: string | null = null;
 
@@ -31,6 +31,9 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   
   const mediaType = (type && type !== 'all') ? type : (item.type || item.media_type || (item.first_air_date ? 'tv' : 'movie'));
   const id = Number(item.tmdbId || item.id);
+  
+  const releaseDate = item.release_date || item.first_air_date || item.year;
+  const upcoming = isUpcoming(releaseDate);
 
   const getWatchPath = useCallback(() => {
     if (mediaType === 'tv') {
@@ -145,6 +148,12 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
         onKeyDown={handleKeyDown}
         onClick={handleClick}
       >
+        {upcoming && (
+          <div className="absolute top-2 left-2 z-[30] bg-[#E50914] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg flex items-center gap-1 uppercase tracking-wider">
+            <Calendar size={10} />
+            Upcoming
+          </div>
+        )}
         {(listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
           <button
             onClick={handleRemoveAction}
@@ -200,16 +209,18 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
 
           <div className="flex items-center justify-between mb-3">
             <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(getWatchPath());
-                }}
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-none cursor-pointer hover:bg-white/80 transition-colors"
-                title="Play"
-              >
-                <Play size={18} fill="black" className="ml-0.5" />
-              </button>
+              {!upcoming && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(getWatchPath());
+                  }}
+                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-none cursor-pointer hover:bg-white/80 transition-colors"
+                  title="Play"
+                >
+                  <Play size={18} fill="black" className="ml-0.5" />
+                </button>
+              )}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -243,11 +254,13 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
           </div>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[#46d369] text-xs font-bold">98% Match</span>
+            <span className={cn("text-xs font-bold", upcoming ? "text-white/60" : "text-[#46d369]")}>
+              {upcoming ? 'Coming Soon' : '98% Match'}
+            </span>
             <span className="text-white text-xs">
               {(item.release_date || item.first_air_date || item.year || '').split('-')[0]}
             </span>
-            <span className="border border-white/40 px-1 text-[10px] text-white rounded-[2px]">HD</span>
+            {!upcoming && <span className="border border-white/40 px-1 text-[10px] text-white rounded-[2px]">HD</span>}
           </div>
 
           <h3 className="text-white text-sm font-bold truncate">
