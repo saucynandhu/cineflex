@@ -36,7 +36,7 @@ export default function Search() {
 
   return (
     <div className="pt-24 min-h-screen bg-[#141414] px-4 md:px-12">
-      <div className="flex items-center bg-[#181818] border border-white/10 rounded-md mb-8 transition-all focus-within:border-white/30 shadow-xl">
+      <div className="sticky top-[80px] z-30 flex items-center bg-[#181818]/90 backdrop-blur-md border border-white/10 rounded-md mb-8 transition-all focus-within:border-white/30 shadow-2xl">
         <SearchIcon className="ml-4 text-white/40" size={20} />
         <input
           type="text"
@@ -85,7 +85,7 @@ export default function Search() {
         </div>
       ) : (
         <div className="text-white/20 text-center py-40">
-          <p className="text-xl font-black uppercase tracking-[0.2em]">Explore Cineflix</p>
+          <p className="text-xl font-black uppercase tracking-[0.2em]">Explore Cineflex</p>
         </div>
       )}
     </div>

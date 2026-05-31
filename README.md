@@ -1,4 +1,4 @@
-# CineFlix — Netflix-Style Streaming Frontend
+# CineFlex — Netflix-Style Streaming Frontend
 
 ![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-blue?style=for-the-badge&logo=tailwind-css)
@@ -34,8 +34,8 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 ### Installation
 1. **Clone the repo**:
    ```bash
-   git clone https://github.com/saucynandhu/cineflix.git
-   cd cineflix
+   git clone https://github.com/saucynandhu/cineflex.git
+   cd cineflex
    ```
 
 2. **Install dependencies**:
@@ -65,7 +65,7 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 
 ## Project Structure
 ```
-cineflix/
+cineflex/
 ├── public/             # Static assets
 ├── src/
 │   ├── components/     # Reusable UI components (Navbar, MediaCard, etc.)

@@ -10,7 +10,7 @@ export default function LoadingScreen() {
         className="flex flex-col items-center gap-6"
       >
         <h1 className="text-[#E50914] text-5xl md:text-7xl font-black tracking-tighter select-none">
-          CINEFLIX
+          CINEFLEX
         </h1>
         <div className="flex items-center gap-1">
           {[0, 1, 2].map((i) => (

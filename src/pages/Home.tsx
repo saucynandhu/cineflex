@@ -76,7 +76,7 @@ export default function Home() {
 
       setSections([
         { title: 'Trending Now', items: trending, type: 'movie' },
-        { title: 'New on Cineflix', items: trending.slice().reverse(), type: 'movie' }, // Mocking new
+        { title: 'New on Cineflex', items: trending.slice().reverse(), type: 'movie' }, // Mocking new
         { title: 'Popular TV Shows', items: popularTV, type: 'tv' },
         { title: 'Top Rated Movies', items: topRated, type: 'movie' },
         { title: 'Action & Adventure', items: action, type: 'movie' },

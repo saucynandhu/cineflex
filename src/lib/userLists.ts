@@ -23,12 +23,12 @@ export interface WatchedItem extends ListItem {
   episode?: number;
 }
 
-const STORAGE_VERSION_KEY = 'cineflix_storage_version';
+const STORAGE_VERSION_KEY = 'cineflex_storage_version';
 const CURRENT_STORAGE_VERSION = 2;
 
-const CONTINUE_WATCHING_KEY = 'cineflix_continue_watching';
-const WATCH_LATER_KEY = 'cineflix_watch_later';
-const WATCHED_KEY = 'cineflix_watched';
+const CONTINUE_WATCHING_KEY = 'cineflex_continue_watching';
+const WATCH_LATER_KEY = 'cineflex_watch_later';
+const WATCHED_KEY = 'cineflex_watched';
 
 const MAX_CONTINUE_WATCHING = 20;
 const MAX_WATCH_LATER = 100;

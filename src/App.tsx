@@ -13,6 +13,9 @@ import Search from './pages/Search';
 import MyList from './pages/MyList';
 import Donate from './pages/Donate';
 import Ads from './pages/Ads';
+import Docs from './pages/Docs';
+import Privacy from './pages/Privacy';
+import License from './pages/License';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -31,6 +34,9 @@ function AppContent() {
           <Route path="/my-list" element={<MyList />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/ads" element={<Ads />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/license" element={<License />} />
           <Route path="/movie/:id" element={<Detail type="movie" />} />
           <Route path="/tv/:id" element={<Detail type="tv" />} />
           <Route path="/watch/movie/:id" element={<Watch type="movie" />} />

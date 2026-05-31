@@ -1,8 +1,8 @@
-# Cineflix — Change Log
+# Cineflex — Change Log
 
 ## [2026-05-20] — Session Summary
 ### Changes Made:
-- Created `DESIGN_SYSTEM.md` in the project root, providing full documentation of the Cineflix visual identity, color palette, typography, components, and layout rules.
+- Created `DESIGN_SYSTEM.md` in the project root, providing full documentation of the Cineflex visual identity, color palette, typography, components, and layout rules.
 - Added global adult content filtering to all TMDB API calls by setting `include_adult: false` in the axios interceptor.
 - Added a "Surprise Me" feature to the Navbar (desktop and mobile) that picks a random trending item.
 - Removed progress bars from "Continue Watching" cards and detail pages.

@@ -21,16 +21,16 @@ export function useUserLists() {
     // Listen for storage changes in other tabs
     window.addEventListener('storage', refreshLists);
     // Listen for changes in the same tab
-    window.addEventListener('cineflix_list_update', handleUpdate);
+    window.addEventListener('cineflex_list_update', handleUpdate);
 
     return () => {
       window.removeEventListener('storage', refreshLists);
-      window.removeEventListener('cineflix_list_update', handleUpdate);
+      window.removeEventListener('cineflex_list_update', handleUpdate);
     };
   }, [refreshLists]);
 
   const triggerUpdate = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('cineflix_list_update'));
+    window.dispatchEvent(new CustomEvent('cineflex_list_update'));
   }, []);
 
   const addToContinueWatching = useCallback((item: ContinueWatchingItem) => {

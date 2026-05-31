@@ -119,7 +119,7 @@ export default function Navbar() {
       >
         <div className="flex items-center gap-6 md:gap-10">
           <Link to="/" className="text-[#E50914] text-2xl font-black tracking-tighter uppercase transition-transform hover:scale-105">
-            Cineflix
+            Cineflex
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
@@ -292,7 +292,7 @@ export default function Navbar() {
             className="fixed inset-0 z-[100] bg-[#141414] flex flex-col p-6"
           >
             <div className="flex items-center justify-between mb-8">
-              <span className="text-[#E50914] text-2xl font-black uppercase tracking-tighter">Cineflix</span>
+              <span className="text-[#E50914] text-2xl font-black uppercase tracking-tighter">Cineflex</span>
               <button onClick={() => setIsMobileMenuOpen(false)} className="text-white p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X size={32} />
               </button>
@@ -337,7 +337,7 @@ export default function Navbar() {
             </div>
             
             <div className="mt-auto pt-8 border-t border-white/10">
-              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] text-center">© 2026 Cineflix Entertainment</p>
+              <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] text-center">© 2026 Cineflex Entertainment</p>
             </div>
           </motion.div>
         )}

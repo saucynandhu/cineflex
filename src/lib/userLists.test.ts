@@ -57,8 +57,8 @@ describe('userLists.ts', () => {
     const v1Data = [
       { id: 303, type: 'movie', title: 'Old Movie', posterPath: '/path', year: '1990' }
     ];
-    localStorage.setItem('cineflix_continue_watching', JSON.stringify(v1Data));
-    localStorage.setItem('cineflix_storage_version', '1');
+    localStorage.setItem('cineflex_continue_watching', JSON.stringify(v1Data));
+    localStorage.setItem('cineflex_storage_version', '1');
 
     // We need to re-import or trigger migration
     // Since migrate() runs on module load, we might need a way to trigger it manually or re-evaluate.

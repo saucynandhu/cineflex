@@ -1,6 +1,6 @@
-# Cineflix Design System
+# Cineflex Design System
 
-This document outlines the visual identity, UI tokens, and component guidelines for the Cineflix streaming platform. This system is designed to replicate the premium, immersive experience of Netflix while maintaining high performance and responsiveness.
+This document outlines the visual identity, UI tokens, and component guidelines for the Cineflex streaming platform. This system is designed to replicate the premium, immersive experience of Netflix while maintaining high performance and responsiveness.
 
 ---
 
