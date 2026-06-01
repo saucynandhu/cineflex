@@ -18,6 +18,7 @@ import Privacy from './pages/Privacy';
 import License from './pages/License';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import CardPortal from './components/CardPortal';
 
 function AppContent() {
   const location = useLocation();
@@ -46,6 +47,7 @@ function AppContent() {
         </Routes>
       </main>
       {!hideGlobalUI && <Footer />}
+      <CardPortal />
     </div>
   );
 }

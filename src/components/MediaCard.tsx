@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Play, Plus, ChevronDown, Check, X, Calendar } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
 import { cn, isUpcoming } from '../lib/utils';
-
-let currentHoveredId: string | null = null;
 
 interface MediaCardProps {
   item: any;
@@ -16,15 +13,9 @@ interface MediaCardProps {
 }
 
 export default function MediaCard({ item, type, listType, onRemove }: MediaCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const [popupReady, setPopupReady] = useState(false);
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0, width: 0 });
-  const cardId = useRef(Math.random().toString(36));
-  
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<number | null>(null);
-  const closeTimer = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
   
   const navigate = useNavigate();
   const { isInWatchLater, toggleWatchLater, removeFromWatchLater, removeFromContinueWatching, removeFromWatched } = useUserLists();
@@ -34,6 +25,7 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   
   const releaseDate = item.release_date || item.first_air_date || item.year;
   const upcoming = isUpcoming(releaseDate);
+  const year = (releaseDate || '').split('-')[0];
 
   const getWatchPath = useCallback(() => {
     if (mediaType === 'tv') {
@@ -44,122 +36,58 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
 
   const getDetailsPath = useCallback(() => `/${mediaType}/${id}`, [id, mediaType]);
 
-  const clearTimers = () => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  };
-
-  const closePopup = useCallback(() => {
-    if (currentHoveredId === cardId.current) {
-      currentHoveredId = null;
-    }
-    setHovered(false);
-    setPopupReady(false);
-    clearTimers();
-  }, []);
-
   const handleMouseEnter = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    
-    // Check if card is visible enough within its parent row
-    if (cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect();
-      const parent = cardRef.current.closest('.overflow-x-auto');
-      if (parent) {
-        const pRect = parent.getBoundingClientRect();
-        const visibleWidth = Math.min(rect.right, pRect.right) - Math.max(rect.left, pRect.left);
-        const visibility = visibleWidth / rect.width;
-        if (visibility < 0.6) return; // Don't trigger if less than 60% visible
-      }
-    }
+    // Check if it's desktop (pointer: fine)
+    if (!window.matchMedia('(pointer: fine)').matches) return;
 
-    currentHoveredId = cardId.current;
-    setHovered(true);
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = window.setTimeout(() => {
-      if (currentHoveredId === cardId.current) {
-        setPopupReady(true);
-      }
+      openPortal();
     }, 150);
   };
 
-  useEffect(() => {
-    if (!popupReady) return;
-
-    const updatePosition = () => {
-      if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        
-        // Check visibility during scroll - if it goes too far off edge, close it
-        const parent = cardRef.current.closest('.overflow-x-auto');
-        if (parent) {
-          const pRect = parent.getBoundingClientRect();
-          const visibleWidth = Math.min(rect.right, pRect.right) - Math.max(rect.left, pRect.left);
-          const visibility = visibleWidth / rect.width;
-          if (visibility < 0.5) {
-            closePopup();
-            return;
-          }
-        }
-
-        // Account for the 1.05x scale of the card
-        const scale = 1.05;
-        const scaledWidth = rect.width * scale;
-        const scaledHeight = rect.height * scale;
-        const offsetX = (scaledWidth - rect.width) / 2;
-        const offsetY = (scaledHeight - rect.height) / 2;
-
-        let left = rect.left - offsetX;
-        let top = rect.bottom + offsetY;
-        
-        // Horizontal adjustment
-        if (left + scaledWidth > vw - 8) left = vw - scaledWidth - 8;
-        if (left < 8) left = 8;
-        
-        // Vertical adjustment (if too close to bottom, show above)
-        // 160 is approx popup height
-        if (top + 160 > vh - 20) {
-          top = rect.top - offsetY - 160;
-        }
-
-        setPopupPos((prev) => {
-          if (prev.x === left && prev.y === top && prev.width === scaledWidth) return prev;
-          return { x: left, y: top, width: scaledWidth };
-        });
-      }
-      rafRef.current = requestAnimationFrame(updatePosition);
-    };
-
-    rafRef.current = requestAnimationFrame(updatePosition);
-    window.addEventListener('scroll', updatePosition, { capture: true, passive: true });
-    window.addEventListener('resize', updatePosition, { passive: true });
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('scroll', updatePosition, { capture: true });
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [popupReady]);
-
   const handleMouseLeave = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(closePopup, 120);
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
+  const openPortal = () => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setIsHovered(true);
+    
+    // Custom event to communicate with the global portal
+    window.dispatchEvent(new CustomEvent('media-card-hover', {
+      detail: {
+        item,
+        rect,
+        mediaType,
+        id,
+        upcoming,
+        year,
+        getWatchPath: getWatchPath(),
+        getDetailsPath: getDetailsPath(),
+        isInWatchLater: isInWatchLater(id, mediaType),
+        listType,
+        onToggleWatchLater: () => toggleWatchLater({
+          id: id,
+          tmdbId: id,
+          type: mediaType,
+          title: item.title || item.name,
+          posterPath: item.poster_path || item.posterPath,
+          backdropPath: item.backdrop_path || item.backdropPath,
+          year: year,
+          addedAt: Date.now()
+        }),
+        onClose: () => setIsHovered(false)
+      }
+    }));
   };
 
   const handleClick = () => {
     navigate(listType === 'continue_watching' ? getWatchPath() : getDetailsPath());
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    } else if (e.key === 'Escape') {
-      closePopup();
-    }
   };
 
   const handleRemoveAction = (e: React.MouseEvent) => {
@@ -173,156 +101,62 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
     else if (listType === 'watched') removeFromWatched(id, mediaType, item.season, item.episode);
   };
 
-  useEffect(() => {
-    return () => clearTimers();
-  }, []);
-
   return (
-    <>
-      <div
-        ref={cardRef}
-        role="button"
-        tabIndex={0}
-        aria-label={`${item.title || item.name} details`}
-        className={cn(
-          "relative flex-none cursor-pointer transition-all duration-400 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
-          hovered ? "z-[50]" : "z-[1]"
-        )}
-        style={{
-          width: 'clamp(160px, 20vw, 240px)',
-          aspectRatio: '16/9',
-        }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onKeyDown={handleKeyDown}
-        onClick={handleClick}
-      >
+    <div
+      ref={cardRef}
+      className={cn(
+        "relative flex-none cursor-pointer transition-opacity duration-300",
+        isHovered ? "opacity-0 pointer-events-none" : "opacity-100"
+      )}
+      style={{
+        width: 'clamp(160px, 20vw, 240px)',
+        aspectRatio: '16/9',
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+    >
+      <div className="w-full h-full overflow-hidden rounded-[4px] bg-[#141414] relative">
+        <img
+          src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
+          alt={item.title || item.name}
+          className="w-full h-full object-cover block"
+          loading="lazy"
+        />
+
+        {/* Mobile Title Overlay (md:hidden as per plan) */}
+        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent md:hidden">
+          <h3 className="text-white text-[11px] font-bold truncate">
+            {item.title || item.name}
+          </h3>
+          <p className="text-gray-300 text-[9px] font-medium">
+            {year}
+          </p>
+        </div>
+
         {upcoming && (
-          <div className="absolute top-2 left-2 z-[30] bg-[#E50914] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg flex items-center gap-1 uppercase tracking-wider">
+          <div className="absolute top-2 left-2 z-10 bg-[#E50914] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg flex items-center gap-1 uppercase tracking-wider">
             <Calendar size={10} />
             Upcoming
           </div>
         )}
-        {(listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
-          <button
-            onClick={handleRemoveAction}
-            className={cn(
-              "absolute top-2 right-2 z-[30] w-6 h-6 rounded-full bg-black/70 border border-white/30 text-white flex items-center justify-center cursor-pointer transition-all hover:bg-red-600/80",
-              hovered ? "opacity-100" : "opacity-0"
-            )}
-            title="Remove from list"
-          >
-            <X size={14} />
-          </button>
-        )}
-
-        <div
-          className={cn(
-            "w-full h-full overflow-hidden rounded-[4px] bg-[#141414] transition-transform duration-400 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
-            hovered ? "scale-105" : "scale-100"
-          )}
-        >
-          <img
-            src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
-            alt={item.title || item.name}
-            className="w-full h-full object-cover block"
-            loading="lazy"
-          />
-        </div>
 
         {listType === 'continue_watching' && item.type === 'tv' && item.season && (
-          <div className="absolute bottom-2 left-2 z-[20] text-[11px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] pointer-events-none">
+          <div className="absolute bottom-2 left-2 z-10 text-[11px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:hidden">
             S{item.season}E{item.episode}
           </div>
         )}
       </div>
 
-      {popupReady && currentHoveredId === cardId.current && createPortal(
-        <div
-          className="fixed z-[9999] bg-[#181818] rounded-b-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.8)] p-3 animate-[fadeInUp_0.2s_ease-out_forwards]"
-          style={{
-            top: popupPos.y,
-            left: popupPos.x,
-            width: popupPos.width,
-          }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onClick={(e) => e.stopPropagation()}
+      {(listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
+        <button
+          onClick={handleRemoveAction}
+          className="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-black/70 border border-white/30 text-white flex items-center justify-center cursor-pointer opacity-100 hover:bg-red-600/80 md:hidden"
+          title="Remove from list"
         >
-          <style>{`
-            @keyframes fadeInUp {
-              from { opacity: 0; transform: translateY(-10px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          `}</style>
-
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-2">
-              {!upcoming && (
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(getWatchPath());
-                  }}
-                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-none cursor-pointer hover:bg-white/80 transition-colors"
-                  title="Play"
-                >
-                  <Play size={18} fill="black" className="ml-0.5" />
-                </button>
-              )}
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleWatchLater({
-                    id: id,
-                    tmdbId: id,
-                    type: mediaType,
-                    title: item.title || item.name,
-                    posterPath: item.poster_path || item.posterPath,
-                    backdropPath: item.backdrop_path || item.backdropPath,
-                    year: (item.release_date || item.first_air_date || item.year || '').split('-')[0],
-                    addedAt: Date.now()
-                  });
-                }}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-2 border-white/50 text-white cursor-pointer hover:border-white transition-colors"
-                title={isInWatchLater(id, mediaType) ? "Remove from My List" : "Add to My List"}
-              >
-                {isInWatchLater(id, mediaType) ? <Check size={18} /> : <Plus size={18} />}
-              </button>
-            </div>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(getDetailsPath());
-              }}
-              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-2 border-white/50 text-white cursor-pointer hover:border-white transition-colors ml-auto"
-              title="More info"
-            >
-              <ChevronDown size={18} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 mb-2">
-            <span className={cn("text-xs font-bold", upcoming ? "text-white/60" : "text-[#46d369]")}>
-              {upcoming ? 'Coming Soon' : '98% Match'}
-            </span>
-            <span className="text-white text-xs">
-              {(item.release_date || item.first_air_date || item.year || '').split('-')[0]}
-            </span>
-            {!upcoming && <span className="border border-white/40 px-1 text-[10px] text-white rounded-[2px]">HD</span>}
-          </div>
-
-          <h3 className="text-white text-sm font-bold truncate">
-            {item.title || item.name}
-          </h3>
-          {listType === 'continue_watching' && item.episodeName && (
-             <p className="text-gray-400 text-[10px] font-medium mt-1 truncate">
-               {item.episodeName}
-             </p>
-          )}
-        </div>,
-        document.body
+          <X size={14} />
+        </button>
       )}
-    </>
+    </div>
   );
 }
