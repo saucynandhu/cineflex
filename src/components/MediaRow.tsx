@@ -1,21 +1,87 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MediaCard from './MediaCard';
+import SkeletonRow from './SkeletonRow';
 import { cn } from '../lib/utils';
 
 interface MediaRowProps {
   title: string;
-  items: any[];
+  items?: any[];
+  fetchFn?: () => Promise<any[]>;
   type?: 'movie' | 'tv' | 'all';
   listType?: 'continue_watching' | 'watch_later' | 'watched';
   onRemove?: (id: number, type: string) => void;
 }
 
-export default function MediaRow({ title, items, type, listType, onRemove }: MediaRowProps) {
+export default function MediaRow({ title, items: initialItems, fetchFn, type, listType, onRemove }: MediaRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [items, setItems] = useState<any[]>(initialItems || []);
+  const [loading, setLoading] = useState(!initialItems && !!fetchFn);
+  const [hasLoaded, setHasLoaded] = useState(!!initialItems);
   const [showArrows, setShowArrows] = useState(false);
 
-  if (!items || items.length === 0) return null;
+  useEffect(() => {
+    if (initialItems) {
+      setItems(initialItems);
+      setHasLoaded(true);
+      setLoading(false);
+    }
+  }, [initialItems]);
+
+  useEffect(() => {
+    if (hasLoaded || !fetchFn || !containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadData();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [hasLoaded, fetchFn]);
+
+  const loadData = async () => {
+    if (!fetchFn) return;
+    setLoading(true);
+    try {
+      const data = await fetchFn();
+      setItems(data);
+      setHasLoaded(true);
+    } catch (err) {
+      console.error(`Failed to fetch items for row: ${title}`, err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (el) {
+      const onWheel = (e: WheelEvent) => {
+        if (e.deltaY === 0) return;
+        
+        // If it's a vertical scroll, convert to horizontal
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY * 2;
+        }
+      };
+      el.addEventListener('wheel', onWheel, { passive: false });
+      return () => el.removeEventListener('wheel', onWheel);
+    }
+  }, []);
+
+  if (!loading && hasLoaded && items.length === 0 && !initialItems) return null;
+  
+  if (loading && !hasLoaded) {
+    return <div ref={containerRef}><SkeletonRow title={title} /></div>;
+  }
 
   const scroll = (direction: 'left' | 'right') => {
     if (rowRef.current) {
@@ -30,6 +96,7 @@ export default function MediaRow({ title, items, type, listType, onRemove }: Med
 
   return (
     <div 
+      ref={containerRef}
       className="relative space-y-2 md:space-y-4 px-4 md:px-12 group/section"
       onMouseEnter={() => setShowArrows(true)}
       onMouseLeave={() => setShowArrows(false)}

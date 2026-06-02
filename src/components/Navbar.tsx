@@ -48,7 +48,7 @@ export default function Navbar() {
     const fetchSuggestions = async () => {
       setIsSearching(true);
       try {
-        const results = await searchMulti(searchQuery);
+        const { results } = await searchMulti(searchQuery);
         const filtered = results
           .filter(item => (item.media_type as string) !== 'person' && (item.poster_path || item.backdrop_path))
           .slice(0, 6);

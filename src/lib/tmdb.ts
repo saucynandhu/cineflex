@@ -87,11 +87,18 @@ export const getEpisodes = async (tvId: string | number, seasonNumber: number): 
   return data.episodes;
 };
 
-export const searchMulti = async (query: string): Promise<MediaBase[]> => {
+export const searchMulti = async (query: string, page: number = 1): Promise<{results: MediaBase[], total_pages: number}> => {
   const { data } = await api.get(`/search/multi`, {
-    params: { query },
+    params: { query, page },
   });
-  return data.results;
+  return { results: data.results, total_pages: data.total_pages };
+};
+
+export const searchType = async (type: 'movie' | 'tv', query: string, page: number = 1): Promise<{results: MediaBase[], total_pages: number}> => {
+  const { data } = await api.get(`/search/${type}`, {
+    params: { query, page },
+  });
+  return { results: data.results, total_pages: data.total_pages };
 };
 
 export const getGenres = async (type: 'movie' | 'tv'): Promise<Genre[]> => {

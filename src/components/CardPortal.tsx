@@ -47,12 +47,14 @@ export default function CardPortal() {
     window.addEventListener('media-card-hover', handleHover);
     window.addEventListener('resize', handleTeardown);
     window.addEventListener('scroll', handleTeardown, { passive: true });
+    window.addEventListener('wheel', handleTeardown, { passive: true });
     window.addEventListener('popstate', handleTeardown);
 
     return () => {
       window.removeEventListener('media-card-hover', handleHover);
       window.removeEventListener('resize', handleTeardown);
       window.removeEventListener('scroll', handleTeardown);
+      window.removeEventListener('wheel', handleTeardown);
       window.removeEventListener('popstate', handleTeardown);
     };
   }, [data]);
