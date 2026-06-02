@@ -81,6 +81,15 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
           year: year,
           addedAt: Date.now()
         }),
+        onRemove: () => {
+          if (onRemove) {
+            onRemove(id, mediaType);
+            return;
+          }
+          if (listType === 'continue_watching') removeFromContinueWatching(id, mediaType);
+          else if (listType === 'watch_later') removeFromWatchLater(id, mediaType);
+          else if (listType === 'watched') removeFromWatched(id, mediaType, item.season, item.episode);
+        },
         onClose: () => setIsHovered(false)
       }
     }));

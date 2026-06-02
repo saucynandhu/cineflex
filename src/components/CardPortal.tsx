@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Plus, ChevronDown, Check } from 'lucide-react';
+import { Play, Plus, ChevronDown, Check, X } from 'lucide-react';
 import { getImageUrl } from '../lib/tmdb';
 import { cn } from '../lib/utils';
 
@@ -16,6 +16,7 @@ interface PortalData {
   isInWatchLater: boolean;
   listType?: string;
   onToggleWatchLater: () => void;
+  onRemove?: () => void;
   onClose: () => void;
 }
 
@@ -66,7 +67,7 @@ export default function CardPortal() {
 
   if (!data) return null;
 
-  const { rect, item, upcoming, year, getWatchPath, getDetailsPath, isInWatchLater, onToggleWatchLater } = data;
+  const { rect, item, upcoming, year, getWatchPath, getDetailsPath, isInWatchLater, onToggleWatchLater, onRemove, listType } = data;
 
   const widthScale = 1.3;
   const targetWidth = rect.width * widthScale;
@@ -134,6 +135,19 @@ export default function CardPortal() {
             >
               {isInWatchLater ? <Check size={20} /> : <Plus size={20} />}
             </button>
+            {onRemove && (listType === 'continue_watching' || listType === 'watch_later' || listType === 'watched') && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                  closePortal();
+                }}
+                className="w-9 h-9 rounded-full bg-[#2a2a2a] border-2 border-white/50 flex items-center justify-center text-white hover:border-white hover:bg-red-600/20 transition-colors"
+                title="Remove from list"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
           <button 
             onClick={(e) => {
