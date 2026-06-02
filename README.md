@@ -8,16 +8,19 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 
 ## Features
 - **Browse Trending & Top Rated**: Explore the latest and greatest in movies and TV shows.
-- **Genre Filtering**: Filter content by your favorite genres.
+- **Advanced Search**: Powerful search with content-type filters and high-fidelity infinite scroll.
+- **Intelligent Lazy Loading**: Optimized performance with rows that only fetch data when visible.
+- **Mouse Wheel Navigation**: Intuitive horizontal scrolling for media rows using your mouse wheel.
+- **Source Switcher**: Easily switch between video providers if one source is unavailable.
 - **Detailed Metadata**: Full detail pages with cast, ratings, release years, and descriptions.
 - **Embedded Video Player**: Integrated player with multiple source options for reliable streaming.
-- **Source Switcher**: Easily switch between video providers if one source is unavailable.
-- **Search Functionality**: Quickly find any title across the vast TMDB database.
 - **Responsive Dark UI**: A fully responsive, Netflix-inspired dark theme optimized for all devices.
 - **Smooth Animations**: High-quality hover effects and transitions using Framer Motion.
 
 ## Tech Stack
 - **Framework**: React 19 (Vite)
+- **State Management**: Zustand (with Persistence)
+- **Performance**: Intersection Observer API (Lazy Loading)
 - **Routing**: React Router 7
 - **Styling**: Tailwind CSS 4
 - **Animations**: Framer Motion
