@@ -10,7 +10,14 @@ export interface ListItem {
   addedAt: number;
 }
 
-export interface ContinueWatchingItem extends ListItem {
+export interface WatchProgress {
+  currentTime?: number;
+  duration?: number;
+  progress?: number;
+  lastPlayerEvent?: string;
+}
+
+export interface ContinueWatchingItem extends ListItem, WatchProgress {
   season?: number;
   episode?: number;
   episodeName?: string;
@@ -98,6 +105,38 @@ function isSameWatchedItem(item: WatchedItem, target: WatchedItem): boolean {
   return Number(item.season) === Number(target.season) && Number(item.episode) === Number(target.episode);
 }
 
+function hasSamePlaybackContext(existing: ContinueWatchingItem, next: ContinueWatchingItem): boolean {
+  if (existing.type !== next.type) return false;
+  if (!hasSameMediaId(existing, next.tmdbId)) return false;
+  if (next.type === 'movie') return true;
+
+  return Number(existing.season) === Number(next.season) && Number(existing.episode) === Number(next.episode);
+}
+
+function mergeProgress(existing: ContinueWatchingItem | undefined, next: ContinueWatchingItem): ContinueWatchingItem {
+  if (!existing || !hasSamePlaybackContext(existing, next)) return next;
+
+  return {
+    ...next,
+    currentTime: next.currentTime ?? existing.currentTime,
+    duration: next.duration ?? existing.duration,
+    progress: next.progress ?? existing.progress,
+    lastPlayerEvent: next.lastPlayerEvent ?? existing.lastPlayerEvent,
+  };
+}
+
+function applyProgress<T extends ContinueWatchingItem>(item: T, progress?: WatchProgress): T {
+  if (!progress) return item;
+
+  return {
+    ...item,
+    currentTime: progress.currentTime ?? item.currentTime,
+    duration: progress.duration ?? item.duration,
+    progress: progress.progress ?? item.progress,
+    lastPlayerEvent: progress.lastPlayerEvent ?? item.lastPlayerEvent,
+  };
+}
+
 // Continue Watching
 export const getContinueWatching = (): ContinueWatchingItem[] => 
   getStorageItem<ContinueWatchingItem[]>(CONTINUE_WATCHING_KEY, []);
@@ -107,12 +146,13 @@ export const addToContinueWatching = (item: ContinueWatchingItem): void => {
   const index = list.findIndex(i => 
     (Number(i.tmdbId) === Number(item.tmdbId) || Number(i.id) === Number(item.tmdbId)) && i.type === item.type
   );
+  const existing = index !== -1 ? list[index] : undefined;
   
   if (index !== -1) {
     list.splice(index, 1);
   }
   
-  list.unshift({ ...item, watchedAt: Date.now() });
+  list.unshift({ ...mergeProgress(existing, item), watchedAt: Date.now() });
   list = list.slice(0, MAX_CONTINUE_WATCHING);
   setStorageItem(CONTINUE_WATCHING_KEY, list);
 };
@@ -129,19 +169,38 @@ export const removeFromContinueWatching = (tmdbId: number, type: 'movie' | 'tv')
   setStorageItem(CONTINUE_WATCHING_KEY, list);
 };
 
-export const updateContinueWatching = (tmdbId: number, type: 'movie' | 'tv', season?: number, episode?: number, episodeName?: string): void => {
+export const updateContinueWatching = (
+  tmdbId: number,
+  type: 'movie' | 'tv',
+  season?: number,
+  episode?: number,
+  episodeName?: string,
+  progress?: WatchProgress
+): void => {
   const list = getContinueWatching();
-  const item = list.find(i => (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type);
+  let item = list.find(i => (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type);
   if (item) {
     if (season !== undefined) item.season = season;
     if (episode !== undefined) item.episode = episode;
     if (episodeName !== undefined) item.episodeName = episodeName;
+    item = applyProgress(item, progress);
     item.watchedAt = Date.now();
     // Move to front
     const filtered = list.filter(i => !( (Number(i.tmdbId) === Number(tmdbId) || Number(i.id) === Number(tmdbId)) && i.type === type));
     filtered.unshift(item);
     setStorageItem(CONTINUE_WATCHING_KEY, filtered.slice(0, MAX_CONTINUE_WATCHING));
   }
+};
+
+export const updateContinueWatchingProgress = (
+  tmdbId: number,
+  type: 'movie' | 'tv',
+  progress: WatchProgress,
+  season?: number,
+  episode?: number,
+  episodeName?: string
+): void => {
+  updateContinueWatching(tmdbId, type, season, episode, episodeName, progress);
 };
 
 // Watch Later

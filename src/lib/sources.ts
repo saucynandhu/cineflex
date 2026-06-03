@@ -1,4 +1,5 @@
 export type SourceId = 
+  | 'vidking'
   | 'videasy'
   | 'vidlink' 
   | 'vidfast'
@@ -18,7 +19,20 @@ export interface Source {
   name: string;
 }
 
+export interface EmbedOptions {
+  color?: string;
+  autoPlay?: boolean;
+  nextEpisode?: boolean;
+  episodeSelector?: boolean;
+  progress?: number;
+}
+
+export const DEFAULT_SOURCE_ID: SourceId = 'vidking';
+export const VIDKING_ORIGIN = 'https://www.vidking.net';
+export const DEFAULT_PLAYER_COLOR = 'e50914';
+
 export const SOURCES: Source[] = [
+  { id: 'vidking', name: 'VidKing' },
   { id: 'videasy', name: 'Videasy' },
   { id: 'vidlink', name: 'VidLink' },
   { id: 'vidfast', name: 'VidFast' },
@@ -34,17 +48,46 @@ export const SOURCES: Source[] = [
   { id: 'autoembed_co', name: 'AutoEmbed.co' },
 ];
 
+function normalizeHexColor(color: string): string {
+  return color.replace(/^#/, '').trim().slice(0, 6);
+}
+
+function withVidkingParams(url: string, type: 'movie' | 'tv', options: EmbedOptions): string {
+  const params = new URLSearchParams();
+  const color = normalizeHexColor(options.color || DEFAULT_PLAYER_COLOR);
+
+  if (color) params.set('color', color);
+  params.set('autoPlay', String(options.autoPlay ?? true));
+
+  if (type === 'tv') {
+    if (options.nextEpisode !== undefined) params.set('nextEpisode', String(options.nextEpisode));
+    if (options.episodeSelector !== undefined) params.set('episodeSelector', String(options.episodeSelector));
+  }
+
+  if (typeof options.progress === 'number' && Number.isFinite(options.progress) && options.progress > 5) {
+    params.set('progress', String(Math.floor(options.progress)));
+  }
+
+  const query = params.toString();
+  return query ? `${url}?${query}` : url;
+}
+
 export const getEmbedUrl = (
   sourceId: SourceId, 
   type: 'movie' | 'tv', 
   tmdbId: string | number, 
   season?: string | number, 
-  episode?: string | number
+  episode?: string | number,
+  options: EmbedOptions = {}
 ): string => {
   const s = season || '1';
   const e = episode || '1';
 
   const patterns: Record<SourceId, { movie: string; tv: string }> = {
+    vidking: {
+      movie: `${VIDKING_ORIGIN}/embed/movie/${tmdbId}`,
+      tv: `${VIDKING_ORIGIN}/embed/tv/${tmdbId}/${s}/${e}`
+    },
     videasy: {
       movie: `https://player.videasy.net/movie/${tmdbId}`,
       tv: `https://player.videasy.net/tv/${tmdbId}/${s}/${e}`
@@ -100,5 +143,11 @@ export const getEmbedUrl = (
   };
 
   const pattern = patterns[sourceId];
-  return type === 'movie' ? pattern.movie : pattern.tv;
+  const url = type === 'movie' ? pattern.movie : pattern.tv;
+
+  if (sourceId === 'vidking') {
+    return withVidkingParams(url, type, options);
+  }
+
+  return url;
 };

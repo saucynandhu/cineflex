@@ -104,7 +104,7 @@ export default function Movies() {
           <div className="px-4 md:px-12">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredContent.map((item) => (
-                <MediaCard key={item.id} item={item} type="movie" />
+                <MediaCard key={item.id} item={item} type="movie" layout="grid" />
               ))}
             </div>
           </div>

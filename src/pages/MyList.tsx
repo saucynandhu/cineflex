@@ -15,6 +15,7 @@ export default function MyList() {
               key={item.id || item.tmdbId} 
               item={item} 
               listType="watch_later"
+              layout="grid"
               onRemove={removeFromWatchLater}
             />
           ))}

@@ -8,6 +8,7 @@ import { useUserLists } from '../hooks/useUserLists';
 import { cn, isUpcoming, formatDate } from '../lib/utils';
 import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
+import MediaCard from '../components/MediaCard';
 
 interface DetailProps {
   type: 'movie' | 'tv';
@@ -377,33 +378,14 @@ export default function Detail({ type }: DetailProps) {
         )}
 
         {activeTab === 'more' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {(data.recommendations?.results || []).slice(0, 12).map((item: MediaBase) => (
-              <div 
+              <MediaCard
                 key={item.id}
-                onClick={() => navigate(`/${item.media_type || type}/${item.id}`)}
-                className="group cursor-pointer space-y-3"
-              >
-                <div className="aspect-video rounded-md overflow-hidden bg-[#181818] border border-white/5 relative shadow-md">
-                  <img
-                    src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
-                    alt={item.title || item.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Play size={32} fill="white" className="scale-75 group-hover:scale-100 transition-transform duration-300" />
-                  </div>
-                </div>
-                <div className="px-1">
-                  <p className="text-xs font-black text-white truncate uppercase tracking-tighter">
-                    {item.title || item.name}
-                  </p>
-                  <p className="text-[10px] text-white/40 font-bold uppercase">
-                    {( (item as any).release_date || (item as any).first_air_date || '').split('-')[0]}
-                  </p>
-                </div>
-              </div>
+                item={item}
+                type={(item.media_type || type) as 'movie' | 'tv'}
+                layout="grid"
+              />
             ))}
           </div>
         )}

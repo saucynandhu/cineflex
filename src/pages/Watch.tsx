@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as tmdb from '../lib/tmdb';
-import { SourceId, SOURCES, getEmbedUrl } from '../lib/sources';
+import { DEFAULT_PLAYER_COLOR, DEFAULT_SOURCE_ID, SourceId, SOURCES, VIDKING_ORIGIN, getEmbedUrl } from '../lib/sources';
 import { useUserLists } from '../hooks/useUserLists';
+import { useUserListsStore } from '../store/useUserListsStore';
 import { MediaDetails, Episode } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
 import { isUpcoming } from '../lib/utils';
@@ -13,19 +14,79 @@ interface WatchProps {
   type: 'movie' | 'tv';
 }
 
+interface PlayerEventPayload {
+  type?: string;
+  data?: {
+    event?: string;
+    currentTime?: number;
+    duration?: number;
+    progress?: number;
+    id?: string | number;
+    mediaType?: 'movie' | 'tv';
+    season?: number;
+    episode?: number;
+  };
+}
+
+function parsePlayerMessage(data: unknown): PlayerEventPayload | null {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data) as PlayerEventPayload;
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    return data as PlayerEventPayload;
+  }
+
+  return null;
+}
+
+function toFiniteNumber(value: unknown): number | undefined {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
 export default function Watch({ type }: WatchProps) {
   const { id, season, episode } = useParams();
   const navigate = useNavigate();
-  const [source, setSource] = useState<SourceId>('videasy');
+  const [source, setSource] = useState<SourceId>(DEFAULT_SOURCE_ID);
   const [mediaData, setMediaData] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
+  const [resumeTime, setResumeTime] = useState<number | undefined>();
+  const lastProgressSaveRef = useRef(0);
   
   // TV specific state
   const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<Episode[]>([]);
   const currentEpisodeData = currentSeasonEpisodes.find(ep => ep.episode_number === Number(episode));
 
-  const { addToContinueWatching, addToWatched, updateContinueWatching } = useUserLists();
+  const {
+    addToContinueWatching,
+    addToWatched,
+    removeFromContinueWatching,
+    updateContinueWatching,
+    updateContinueWatchingProgress,
+  } = useUserLists();
+
+  useEffect(() => {
+    if (!id) return;
+
+    const existing = useUserListsStore.getState().continueWatching.find(item => {
+      const sameMedia = String(item.tmdbId || item.id) === String(id) && item.type === type;
+      if (!sameMedia) return false;
+      if (type === 'movie') return true;
+
+      return Number(item.season) === Number(season || 1) && Number(item.episode) === Number(episode || 1);
+    });
+
+    const savedTime = toFiniteNumber(existing?.currentTime);
+    const savedProgress = toFiniteNumber(existing?.progress);
+    setResumeTime(savedTime && savedTime > 5 && (!savedProgress || savedProgress < 95) ? savedTime : undefined);
+    lastProgressSaveRef.current = 0;
+  }, [id, type, season, episode]);
 
   useEffect(() => {
     async function fetchDetailsAndRecordActivity() {
@@ -80,7 +141,7 @@ export default function Watch({ type }: WatchProps) {
       }
     }
     fetchDetailsAndRecordActivity();
-  }, [id, type, season, episode, addToContinueWatching, addToWatched]);
+  }, [id, type, season, episode, navigate, addToContinueWatching, addToWatched]);
 
   // Update continue watching with episode name once fetched
   useEffect(() => {
@@ -115,7 +176,125 @@ export default function Watch({ type }: WatchProps) {
       setIsIframeLoading(false);
     }, 2500);
     return () => clearTimeout(timer);
-  }, [source, season, episode]);
+  }, [source, season, episode, resumeTime]);
+
+  const getNextEpisodeTarget = useCallback(() => {
+    if (type !== 'tv') return null;
+
+    const s = Number(season);
+    const e = Number(episode);
+    if (e < currentSeasonEpisodes.length) {
+      const nextEpisodeData = currentSeasonEpisodes.find(ep => ep.episode_number === e + 1);
+      return { season: s, episode: e + 1, episodeName: nextEpisodeData?.name };
+    }
+
+    const nextSeasonNum = s + 1;
+    const nextSeason = mediaData?.seasons?.find(sn => sn.season_number === nextSeasonNum);
+    if (nextSeason) {
+      return { season: nextSeasonNum, episode: 1, episodeName: undefined };
+    }
+
+    return null;
+  }, [type, season, episode, currentSeasonEpisodes, mediaData?.seasons]);
+
+  const handlePlaybackComplete = useCallback(() => {
+    if (!id) return;
+
+    if (type === 'tv') {
+      const nextEpisodeTarget = getNextEpisodeTarget();
+      if (nextEpisodeTarget) {
+        updateContinueWatching(
+          Number(id),
+          'tv',
+          nextEpisodeTarget.season,
+          nextEpisodeTarget.episode,
+          nextEpisodeTarget.episodeName,
+          { currentTime: 0, duration: 0, progress: 0, lastPlayerEvent: 'ended' }
+        );
+      } else {
+        removeFromContinueWatching(Number(id), 'tv');
+      }
+      return;
+    }
+
+    removeFromContinueWatching(Number(id), 'movie');
+  }, [id, type, getNextEpisodeTarget, removeFromContinueWatching, updateContinueWatching]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== VIDKING_ORIGIN) return;
+
+      const message = parsePlayerMessage(event.data);
+      if (message?.type !== 'PLAYER_EVENT' || !message.data) return;
+
+      const data = message.data;
+      if (String(data.id) !== String(id) || data.mediaType !== type) return;
+
+      if (type === 'tv') {
+        const eventSeason = toFiniteNumber(data.season);
+        const eventEpisode = toFiniteNumber(data.episode);
+        if (eventSeason && eventSeason !== Number(season)) return;
+        if (eventEpisode && eventEpisode !== Number(episode)) return;
+      }
+
+      const currentTime = toFiniteNumber(data.currentTime);
+      const duration = toFiniteNumber(data.duration);
+      const progress = toFiniteNumber(data.progress);
+      if (currentTime === undefined) return;
+
+      const playerEvent = data.event || 'timeupdate';
+      const now = Date.now();
+      const isFinalEvent = playerEvent === 'ended' || (progress !== undefined && progress >= 98);
+      const shouldSave = isFinalEvent || playerEvent !== 'timeupdate' || now - lastProgressSaveRef.current > 5000;
+      if (!shouldSave) return;
+
+      lastProgressSaveRef.current = now;
+
+      if (isFinalEvent) {
+        handlePlaybackComplete();
+        return;
+      }
+
+      updateContinueWatchingProgress(
+        Number(id),
+        type,
+        {
+          currentTime,
+          duration,
+          progress,
+          lastPlayerEvent: playerEvent,
+        },
+        type === 'tv' ? Number(season) : undefined,
+        type === 'tv' ? Number(episode) : undefined,
+        type === 'tv' ? currentEpisodeData?.name : undefined
+      );
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [
+    id,
+    type,
+    season,
+    episode,
+    currentEpisodeData?.name,
+    handlePlaybackComplete,
+    updateContinueWatchingProgress,
+  ]);
+
+  const embedUrl = useMemo(() => {
+    if (!id) return '';
+
+    return getEmbedUrl(source, type, id, season, episode, {
+      color: DEFAULT_PLAYER_COLOR,
+      autoPlay: true,
+      nextEpisode: false,
+      episodeSelector: false,
+      progress: source === 'vidking' ? resumeTime : undefined,
+    });
+  }, [source, type, id, season, episode, resumeTime]);
 
   const handlePrev = async () => {
     const s = Number(season);
@@ -132,16 +311,9 @@ export default function Watch({ type }: WatchProps) {
   };
 
   const handleNext = () => {
-    const s = Number(season);
-    const e = Number(episode);
-    if (e < currentSeasonEpisodes.length) {
-      navigate(`/watch/tv/${id}/${s}/${e + 1}`);
-    } else {
-      const nextSeasonNum = s + 1;
-      const nextSeason = mediaData?.seasons?.find(sn => sn.season_number === nextSeasonNum);
-      if (nextSeason) {
-        navigate(`/watch/tv/${id}/${nextSeasonNum}/1`);
-      }
+    const target = getNextEpisodeTarget();
+    if (target) {
+      navigate(`/watch/tv/${id}/${target.season}/${target.episode}`);
     }
   };
 
@@ -157,7 +329,7 @@ export default function Watch({ type }: WatchProps) {
   return (
     <div className="h-screen w-screen flex flex-col bg-black overflow-hidden">
       {/* Top Bar */}
-      <div className="flex-none h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
+      <div className="flex-none h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-4 md:px-6 z-10 gap-3">
         <button
           onClick={() => navigate(`/${type}/${id}`)}
           className="flex items-center gap-2 text-white/70 hover:text-white transition-all font-bold uppercase tracking-widest text-[10px] md:text-xs"
@@ -166,37 +338,40 @@ export default function Watch({ type }: WatchProps) {
           <span className="hidden sm:inline">Back to Details</span>
         </button>
 
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-white font-semibold text-xs md:text-sm leading-tight line-clamp-1 max-w-[200px] md:max-w-md">
+        <div className="flex min-w-0 flex-col items-center text-center">
+          <h1 className="text-white font-semibold text-xs md:text-sm leading-tight line-clamp-1 max-w-[180px] md:max-w-md">
             {mediaData?.title || mediaData?.name}
           </h1>
           {type === 'tv' && (
-            <p className="text-white/60 text-[10px] font-medium mt-0.5">
+            <p className="text-white/60 text-[10px] font-medium mt-0.5 line-clamp-1">
               Season {season} · Episode {episode}
+              {currentEpisodeData?.name && <span className="hidden md:inline"> · {currentEpisodeData.name}</span>}
             </p>
           )}
         </div>
 
-        <div>
-           <select
-             value={source}
-             onChange={(e) => setSource(e.target.value as SourceId)}
-             className="bg-transparent border border-white/30 text-white text-xs rounded-md px-3 py-1.5 outline-none cursor-pointer hover:border-white/50 transition-colors"
-           >
-             {SOURCES.map((src) => (
-               <option key={src.id} value={src.id} className="bg-[#141414]">{src.name}</option>
-             ))}
-           </select>
+        <div className="flex items-center gap-2">
+          <span className="hidden md:inline text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Server</span>
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value as SourceId)}
+            className="bg-black/30 border border-white/30 text-white text-[11px] md:text-xs rounded px-2.5 py-1.5 outline-none cursor-pointer hover:border-white/50 transition-colors max-w-[112px] md:max-w-none"
+          >
+            {SOURCES.map((src) => (
+              <option key={src.id} value={src.id} className="bg-[#141414]">{src.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Iframe Area */}
       <div className="flex-1 relative overflow-hidden bg-black">
         <iframe
-          src={getEmbedUrl(source, type, id!, season, episode)}
+          src={embedUrl}
           className="w-full h-full border-none"
           allowFullScreen
-          allow="autoplay; encrypted-media"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerPolicy="origin"
           title="Video Player"
           onLoad={() => setIsIframeLoading(false)}
         />
@@ -215,7 +390,7 @@ export default function Watch({ type }: WatchProps) {
                   <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
                 </div>
               </div>
-              <p className="text-gray-400 font-bold tracking-widest text-[10px] uppercase">Loading Source...</p>
+              <p className="text-gray-400 font-bold tracking-widest text-[10px] uppercase">Loading {SOURCES.find(src => src.id === source)?.name || 'Server'}...</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -223,12 +398,12 @@ export default function Watch({ type }: WatchProps) {
 
       {/* Bottom Bar (TV Only) */}
       {type === 'tv' && (
-        <div className="flex-none h-14 bg-gradient-to-t from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
-          <div className="flex items-center gap-4">
+        <div className="flex-none h-14 bg-gradient-to-t from-black/90 to-black/70 flex items-center justify-between px-4 md:px-6 z-10 gap-3">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
             {!isFirstEpisodeOfFirstSeason && (
               <button
                 onClick={handlePrev}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 md:px-4 py-1.5 rounded-full text-xs font-bold transition-all"
               >
                 <ChevronLeft size={16} />
                 <span className="hidden sm:inline">Previous Episode</span>
@@ -236,18 +411,18 @@ export default function Watch({ type }: WatchProps) {
             )}
           </div>
 
-          <div className="text-center">
-            <p className="text-white/70 text-[10px] md:text-xs font-medium">
+          <div className="text-center min-w-0 flex-[2]">
+            <p className="text-white/70 text-[10px] md:text-xs font-medium truncate">
               Season {season} · Episode {episode}
               {currentEpisodeData?.name && <span className="hidden md:inline"> · {currentEpisodeData.name}</span>}
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-end gap-4 min-w-0 flex-1">
             {!isLastEpisodeOfSeries && (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 md:px-4 py-1.5 rounded-full text-xs font-bold transition-all"
               >
                 <span className="hidden sm:inline">Next Episode</span>
                 <ChevronRight size={16} />

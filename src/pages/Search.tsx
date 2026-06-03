@@ -165,14 +165,7 @@ export default function Search() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10 pb-10">
             {results.map((item, idx) => (
-              <div key={`${item.id}-${idx}`} className="group relative">
-                <MediaCard item={item} />
-                <div className="mt-2 px-1">
-                  <p className="text-white text-[11px] font-black uppercase tracking-tighter truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                    {item.title || item.name}
-                  </p>
-                </div>
-              </div>
+              <MediaCard key={`${item.id}-${idx}`} item={item} layout="grid" />
             ))}
           </div>
           

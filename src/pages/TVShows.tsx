@@ -101,7 +101,7 @@ export default function TVShows() {
           <div className="px-4 md:px-12">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredContent.map((item) => (
-                <MediaCard key={item.id} item={item} type="tv" />
+                <MediaCard key={item.id} item={item} type="tv" layout="grid" />
               ))}
             </div>
           </div>

@@ -10,6 +10,7 @@ export function useUserLists() {
     addToContinueWatching: store.addToContinueWatching,
     removeFromContinueWatching: store.removeFromContinueWatching,
     updateContinueWatching: store.updateContinueWatching,
+    updateContinueWatchingProgress: store.updateContinueWatchingProgress,
     addToWatchLater: store.addToWatchLater,
     removeFromWatchLater: store.removeFromWatchLater,
     toggleWatchLater: store.toggleWatchLater,

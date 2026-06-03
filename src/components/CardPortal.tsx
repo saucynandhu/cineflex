@@ -11,6 +11,8 @@ interface PortalData {
   id: number;
   upcoming: boolean;
   year: string;
+  progressPercent?: number;
+  episodeLabel?: string | null;
   getWatchPath: string;
   getDetailsPath: string;
   isInWatchLater: boolean;
@@ -69,14 +71,29 @@ export default function CardPortal() {
 
   if (!data) return null;
 
-  const { rect, item, upcoming, year, getWatchPath, getDetailsPath, isInWatchLater, onToggleWatchLater, onRemove, listType } = data;
+  const {
+    rect,
+    item,
+    upcoming,
+    year,
+    progressPercent = 0,
+    episodeLabel,
+    getWatchPath,
+    getDetailsPath,
+    isInWatchLater,
+    onToggleWatchLater,
+    onRemove,
+    listType,
+  } = data;
+  const title = item.title || item.name;
+  const hasProgress = listType === 'continue_watching' && progressPercent > 0;
 
   const widthScale = 1.3;
   const targetWidth = rect.width * widthScale;
   const targetLeft = Math.max(10, Math.min(window.innerWidth - targetWidth - 10, rect.left - (targetWidth - rect.width) / 2));
   
   const expandedImageHeight = targetWidth / (16 / 9);
-  const contentHeight = 130; 
+  const contentHeight = hasProgress ? 150 : 132; 
   const targetHeight = expandedImageHeight + contentHeight;
 
   let targetTop = rect.top - (targetHeight - rect.height) / 2;
@@ -88,7 +105,7 @@ export default function CardPortal() {
       ref={portalRef}
       id="card-portal"
       className={cn(
-        "fixed z-[9999] bg-[#181818] rounded-md shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto",
+        "fixed z-[9999] bg-[#181818] rounded-md shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto ring-1 ring-white/10",
         "transition-[top,left,width,height] duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[top,left,width,height]"
       )}
       style={{
@@ -100,20 +117,30 @@ export default function CardPortal() {
       onMouseLeave={closePortal}
       onClick={() => navigate(getDetailsPath)}
     >
-      <div className="relative aspect-video w-full h-auto overflow-hidden">
+      <div className="relative aspect-video w-full h-auto overflow-hidden bg-black">
         <img
           src={getImageUrl((item.backdrop_path || item.backdropPath) || (item.poster_path || item.posterPath), 'w500')}
-          alt={item.title || item.name}
+          alt={title}
           className="w-full h-full object-cover transform-gpu"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-transparent" />
+        {episodeLabel && (
+          <div className="absolute top-3 left-3 bg-black/70 text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider backdrop-blur-sm">
+            {episodeLabel}
+          </div>
+        )}
+        {hasProgress && (
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
+            <div className="h-full bg-[#E50914]" style={{ width: `${progressPercent}%` }} />
+          </div>
+        )}
       </div>
 
       <div className={cn(
-        "p-4 space-y-4 transition-opacity duration-300 ease-in-out",
+        "p-4 space-y-3 transition-opacity duration-300 ease-in-out",
         isExpanding ? "opacity-100" : "opacity-0"
       )}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex gap-2">
             {!upcoming && (
               <button 
@@ -122,7 +149,7 @@ export default function CardPortal() {
                   navigate(getWatchPath);
                 }}
                 className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition-colors"
-                title="Play"
+                title={listType === 'continue_watching' ? 'Resume' : 'Play'}
               >
                 <Play size={20} fill="black" stroke="black" className="ml-0.5" />
               </button>
@@ -163,17 +190,21 @@ export default function CardPortal() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className={cn("text-xs font-bold", upcoming ? "text-white/60" : "text-[#46d369]")}>
-            {upcoming ? 'Coming Soon' : '98% Match'}
-          </span>
-          <span className="text-white text-xs font-semibold">{year}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={cn("text-xs font-bold", upcoming ? "text-white/60" : "text-[#46d369]")}>{upcoming ? 'Coming Soon' : '98% Match'}</span>
+          {year && <span className="text-white text-xs font-semibold">{year}</span>}
           {!upcoming && <span className="border border-white/40 px-1.5 py-0.5 text-[9px] text-white rounded-[2px] font-bold">HD</span>}
+          {hasProgress && <span className="text-white/50 text-xs font-semibold">{Math.round(progressPercent)}%</span>}
         </div>
 
-        <h3 className="text-white text-base font-bold truncate">
-          {item.title || item.name}
-        </h3>
+        <div className="space-y-1">
+          {listType === 'continue_watching' && (
+            <p className="text-[10px] text-[#E50914] font-black uppercase tracking-[0.16em]">Resume</p>
+          )}
+          <h3 className="text-white text-base font-bold truncate">
+            {title}
+          </h3>
+        </div>
       </div>
     </div>
   );
