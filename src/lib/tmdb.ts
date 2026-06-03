@@ -111,6 +111,13 @@ export const getExternalIds = async (type: 'movie' | 'tv', id: string | number):
   return data;
 };
 
+export const getImages = async (type: 'movie' | 'tv', id: string | number) => {
+  const { data } = await api.get(`/${type}/${id}/images`, {
+    params: { include_image_language: 'en,null' }
+  });
+  return data;
+};
+
 export const getCollection = async (collectionId: number) => {
   const { data } = await api.get(`/collection/${collectionId}`);
   return data; // { id, name, overview, parts: [...movies] }

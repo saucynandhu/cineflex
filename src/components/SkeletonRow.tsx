@@ -8,7 +8,7 @@ export default function SkeletonRow({ title }: { title?: string }) {
             key={i}
             className="flex-none rounded-md bg-white/5 animate-pulse"
             style={{
-              width: 'clamp(160px, 20vw, 240px)',
+              width: '240px',
               aspectRatio: '16/9'
             }}
           />

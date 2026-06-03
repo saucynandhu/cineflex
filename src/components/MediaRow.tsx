@@ -100,6 +100,7 @@ export default function MediaRow({ title, items: initialItems, fetchFn, type, li
       className="relative space-y-2 md:space-y-4 px-4 md:px-12 group/section"
       onMouseEnter={() => setShowArrows(true)}
       onMouseLeave={() => setShowArrows(false)}
+      data-section={listType === 'continue_watching' ? 'continue-watching' : undefined}
     >
       <div className="flex items-center gap-2 group cursor-pointer w-fit">
         <h2 className="text-sm md:text-xl font-semibold text-[#e5e5e5] group-hover:text-white transition-colors">
@@ -128,7 +129,7 @@ export default function MediaRow({ title, items: initialItems, fetchFn, type, li
 
         <div
           ref={rowRef}
-          className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth py-2"
+          className="media-row__items scroll-smooth"
         >
           {items.map((item, idx) => (
             <MediaCard 

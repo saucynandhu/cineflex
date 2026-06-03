@@ -163,7 +163,7 @@ export default function Search() {
         </div>
       ) : results.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10 pb-10">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-10 pb-10">
             {results.map((item, idx) => (
               <div key={`${item.id}-${idx}`} className="group relative">
                 <MediaCard item={item} />
