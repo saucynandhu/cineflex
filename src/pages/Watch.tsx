@@ -7,7 +7,6 @@ import { SourceId, SOURCES, getEmbedUrl } from '../lib/sources';
 import { useUserLists } from '../hooks/useUserLists';
 import { MediaDetails, Episode } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
-import { isUpcoming } from '../lib/utils';
 
 interface WatchProps {
   type: 'movie' | 'tv';
@@ -36,13 +35,6 @@ export default function Watch({ type }: WatchProps) {
           tmdb.getDetails(type, id)
         ]);
         
-        const releaseDate = (details as any).release_date || (details as any).first_air_date;
-        if (isUpcoming(releaseDate)) {
-          console.warn('Attempted to watch unreleased content. Redirecting...');
-          navigate(`/${type}/${id}`, { replace: true });
-          return;
-        }
-
         setMediaData(details);
         
         // Record activity

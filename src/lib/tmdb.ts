@@ -58,6 +58,11 @@ export const getPopular = async (type: 'movie' | 'tv'): Promise<MediaBase[]> => 
   return data.results;
 };
 
+export const getUpcoming = async (): Promise<MediaBase[]> => {
+  const { data } = await api.get('/movie/upcoming');
+  return data.results;
+};
+
 export const getByGenre = async (type: 'movie' | 'tv', genreId: number): Promise<MediaBase[]> => {
   const { data } = await api.get(`/discover/${type}`, {
     params: { with_genres: genreId },

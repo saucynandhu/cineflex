@@ -10,6 +10,38 @@ import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
 import DownloadModal from '../components/DownloadModal';
 
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, mins: number, secs: number } | null>(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          mins: Math.floor((difference / 1000 / 60) % 60),
+          secs: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft(null);
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <span className="tabular-nums">
+      {timeLeft.days}d {timeLeft.hours}h {timeLeft.mins}m {timeLeft.secs}s
+    </span>
+  );
+}
+
 interface DetailProps {
   type: 'movie' | 'tv';
 }
@@ -236,6 +268,15 @@ export default function Detail({ type }: DetailProps) {
               <span className="border border-white/30 px-1.5 py-0.5 text-[10px] md:text-xs rounded-[3px] font-bold">HD</span>
               <span>•</span>
               <span>{runtime}</span>
+              {upcoming && releaseDate && (
+                <>
+                  <span>•</span>
+                  <div className="flex items-center gap-1.5 text-[#E50914] font-black uppercase text-[10px] md:text-sm">
+                    <Sparkles size={14} className="animate-pulse" />
+                    <CountdownTimer targetDate={releaseDate} />
+                  </div>
+                </>
+              )}
             </motion.div>
 
             {/* Expandable Synopsis */}
@@ -271,16 +312,23 @@ export default function Detail({ type }: DetailProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-wrap items-center gap-3 md:gap-4 pt-2 md:pt-4"
+              className="space-y-4 md:space-y-6 pt-2 md:pt-4"
             >
-              <button 
-                onClick={handlePlay}
-                className="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-full font-black text-sm md:text-lg hover:bg-white/90 transition-all flex items-center gap-2 md:gap-3 shadow-xl hover:scale-105"
-              >
-                <Play size={20} className="md:size-6" fill="black" /> Play
-              </button>
-              
-              <button 
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                {upcoming ? (
+                  <div className="bg-white/10 text-white/50 px-6 md:px-10 py-3 md:py-4 rounded-full font-black text-sm md:text-lg border border-white/10 flex items-center gap-2 md:gap-3 cursor-not-allowed">
+                    <Calendar size={20} className="md:size-6" /> Coming Soon
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handlePlay}
+                    className="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-full font-black text-sm md:text-lg hover:bg-white/90 transition-all flex items-center gap-2 md:gap-3 shadow-xl hover:scale-105"
+                  >
+                    <Play size={20} className="md:size-6" fill="black" /> Play
+                  </button>
+                )}
+                
+                <button 
                 onClick={() => toggleWatchLater({ 
                   id: data.id, 
                   tmdbId: data.id, 
@@ -307,6 +355,7 @@ export default function Detail({ type }: DetailProps) {
               >
                 <Download size={20} className="md:size-6" />
               </button>
+              </div>
             </motion.div>
           </div>
         </motion.div>
@@ -427,13 +476,15 @@ export default function Detail({ type }: DetailProps) {
                  <div className="grid grid-cols-1 gap-4">
                    {episodes.map(ep => {
                      const episodeWatched = isEpisodeWatched(selectedSeason, ep.episode_number);
+                     const episodeUpcoming = isUpcoming(ep.air_date);
                      return (
                        <div
                          key={ep.id}
-                         onClick={() => navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)}
+                         onClick={() => !episodeUpcoming && navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)}
                          className={cn(
-                           "flex flex-col md:flex-row gap-8 p-6 rounded-2xl transition-all border border-white/5 hover:border-white/20 hover:bg-white/5 cursor-pointer group",
-                           episodeWatched && "bg-white/[0.02]"
+                           "flex flex-col md:flex-row gap-8 p-6 rounded-2xl transition-all border border-white/5 hover:border-white/20 hover:bg-white/5 group",
+                           episodeWatched && "bg-white/[0.02]",
+                           !episodeUpcoming ? "cursor-pointer" : "cursor-default opacity-80"
                          )}
                        >
                          <div className="relative w-full md:w-72 aspect-video rounded-xl overflow-hidden flex-none shadow-2xl">
@@ -442,35 +493,50 @@ export default function Detail({ type }: DetailProps) {
                             className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
                             alt="" 
                            />
-                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Play size={40} fill="white" className="text-white" />
-                           </div>
+                           {!episodeUpcoming && (
+                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play size={40} fill="white" className="text-white" />
+                             </div>
+                           )}
                            <span className="absolute top-4 left-4 text-3xl font-black text-white/30">{ep.episode_number}</span>
                            {episodeWatched && (
                              <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#E50914] text-white flex items-center justify-center shadow-lg ring-4 ring-black/20">
                                <Check size={22} strokeWidth={3} />
                              </div>
                            )}
+                           {episodeUpcoming && (
+                             <div className="absolute bottom-4 right-4 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter shadow-lg">
+                               Upcoming
+                             </div>
+                           )}
                          </div>
                          <div className="flex-1 flex flex-col justify-center space-y-4">
                            <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                              <h4 className="font-black text-2xl text-white group-hover:text-[#E50914] transition-colors">{ep.name}</h4>
+                              <h4 className={cn(
+                                "font-black text-2xl transition-colors",
+                                episodeUpcoming ? "text-white/40" : "text-white group-hover:text-[#E50914]"
+                              )}>{ep.name}</h4>
                               <span className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded uppercase tracking-tighter">{(ep as any).runtime || 45}m</span>
+                              {episodeUpcoming && ep.air_date && (
+                                <span className="text-xs font-bold text-red-600 uppercase tracking-widest">{formatDate(ep.air_date)}</span>
+                              )}
                             </div>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDownload(selectedSeason, ep.episode_number, ep.name);
-                              }}
-                              className="glass-dark p-3 rounded-full hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              title="Download Episode"
-                            >
-                              <Download size={18} />
-                            </button>
+                            {!episodeUpcoming && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDownload(selectedSeason, ep.episode_number, ep.name);
+                                }}
+                                className="glass-dark p-3 rounded-full hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                title="Download Episode"
+                              >
+                                <Download size={18} />
+                              </button>
+                            )}
                            </div>
                            <p className="text-base text-white/50 leading-relaxed line-clamp-3">
-                            {ep.overview || 'No overview available for this episode.'}
+                            {ep.overview || (episodeUpcoming ? `Airing on ${formatDate(ep.air_date)}` : 'No overview available for this episode.')}
                            </p>
                          </div>
                        </div>

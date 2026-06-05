@@ -34,11 +34,19 @@ export default function MediaCard({ item, type, listType, onRemove }: MediaCardP
   const getDetailsPath = useCallback(() => `/${mediaType}/${id}`, [id, mediaType]);
 
   const handleClick = () => {
+    if (upcoming) {
+      navigate(getDetailsPath());
+      return;
+    }
     navigate(listType === 'continue_watching' ? getWatchPath() : getDetailsPath());
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (upcoming) {
+      navigate(getDetailsPath());
+      return;
+    }
     navigate(getWatchPath());
   };
 
