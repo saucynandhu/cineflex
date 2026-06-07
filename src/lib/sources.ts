@@ -1,5 +1,4 @@
 export type SourceId = 
-  | 'videasy'
   | 'vidlink' 
   | 'vidfast'
   | 'autoembed'
@@ -19,7 +18,6 @@ export interface Source {
 }
 
 export const SOURCES: Source[] = [
-  { id: 'videasy', name: 'Videasy' },
   { id: 'vidlink', name: 'VidLink' },
   { id: 'vidfast', name: 'VidFast' },
   { id: 'autoembed', name: 'AutoEmbed' },
@@ -45,10 +43,6 @@ export const getEmbedUrl = (
   const e = episode || '1';
 
   const patterns: Record<SourceId, { movie: string; tv: string }> = {
-    videasy: {
-      movie: `https://player.videasy.net/movie/${tmdbId}`,
-      tv: `https://player.videasy.net/tv/${tmdbId}/${s}/${e}`
-    },
     vidlink: {
       movie: `https://vidlink.pro/movie/${tmdbId}`,
       tv: `https://vidlink.pro/tv/${tmdbId}/${s}/${e}`
