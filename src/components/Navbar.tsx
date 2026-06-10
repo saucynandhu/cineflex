@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bookmark, Menu, X, Play } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { getTrending, searchMulti, getImageUrl } from '../lib/tmdb';
 import { MediaBase } from '../types/tmdb';
 

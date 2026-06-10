@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import * as tmdb from '../lib/tmdb';
 import { getImageUrl } from '../lib/tmdb';
 import { Play, Plus, Star, Film, Check, X, Calendar, Download, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useUserLists } from '../hooks/useUserLists';
 import { cn, isUpcoming, formatDate } from '../lib/utils';
 import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';

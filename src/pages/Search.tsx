@@ -6,7 +6,7 @@ import SkeletonRow from '../components/SkeletonRow';
 import { Search as SearchIcon, X, Filter } from 'lucide-react';
 import { MediaBase, Genre } from '../types/tmdb';
 import { cn } from '../lib/utils';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'framer-motion';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();

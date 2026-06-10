@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, Info } from 'lucide-react';
 import { getImageUrl, getTrending } from '../lib/tmdb';
 import { cn } from '../lib/utils';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function HeroSection({ genreMap = {} }: { genreMap?: Record<number, string> }) {
   const [movies, setMovies] = useState<any[]>([]);

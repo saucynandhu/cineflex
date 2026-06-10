@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as tmdb from '../lib/tmdb';
 import { SourceId, SOURCES, getEmbedUrl } from '../lib/sources';
 import { useUserLists } from '../hooks/useUserLists';
 import { MediaDetails, Episode } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
+import DownloadModal from '../components/DownloadModal';
 
 interface WatchProps {
   type: 'movie' | 'tv';
@@ -19,6 +20,7 @@ export default function Watch({ type }: WatchProps) {
   const [mediaData, setMediaData] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   
   // TV specific state
   const [currentSeasonEpisodes, setCurrentSeasonEpisodes] = useState<Episode[]>([]);
@@ -169,7 +171,18 @@ export default function Watch({ type }: WatchProps) {
           )}
         </div>
 
-        <div>
+        <div className="flex items-center gap-3">
+          {mediaData && (
+            <button
+              onClick={() => setIsDownloadOpen(true)}
+              className="p-2 rounded-full border border-white/20 text-white/70 hover:text-white hover:bg-white/10 hover:border-white/40 transition-all"
+              title="Download"
+              aria-label="Open download options"
+            >
+              <Download size={16} />
+            </button>
+          )}
+
            <select
              value={source}
              onChange={(e) => setSource(e.target.value as SourceId)}
@@ -247,6 +260,19 @@ export default function Watch({ type }: WatchProps) {
             )}
           </div>
         </div>
+      )}
+
+      {mediaData && id && (
+        <DownloadModal
+          isOpen={isDownloadOpen}
+          onClose={() => setIsDownloadOpen(false)}
+          tmdbId={id}
+          mediaType={type}
+          title={mediaData.title || mediaData.name || ''}
+          season={type === 'tv' ? Number(season) : undefined}
+          episode={type === 'tv' ? Number(episode) : undefined}
+          episodeTitle={currentEpisodeData?.name}
+        />
       )}
     </div>
   );

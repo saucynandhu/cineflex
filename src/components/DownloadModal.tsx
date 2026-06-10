@@ -1,4 +1,5 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, HardDrive, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useDownloads, DownloadItem } from '../hooks/useDownloads';
 import { cn } from '../lib/utils';
@@ -25,6 +26,16 @@ export default function DownloadModal({
   episodeTitle
 }: DownloadModalProps) {
   const { downloads, loading, error } = useDownloads(tmdbId, mediaType, season, episode);
+  const qualities = useMemo(() => getQualities(downloads), [downloads]);
+  const [selectedQuality, setSelectedQuality] = useState<string>('');
+  const visibleDownloads = selectedQuality
+    ? downloads.filter((item) => item.quality === selectedQuality)
+    : downloads;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedQuality(qualities[0] || '');
+  }, [isOpen, qualities]);
 
   const handleDownload = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
@@ -65,6 +76,7 @@ export default function DownloadModal({
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors"
+                aria-label="Close download options"
               >
                 <X size={24} />
               </button>
@@ -93,10 +105,34 @@ export default function DownloadModal({
                   <p className="text-white/50 font-medium">No download links available for this title yet.</p>
                 </div>
               ) : (
-                <div className="grid gap-4">
-                  {downloads.map((item, idx) => (
-                    <DownloadCard key={idx} item={item} onDownload={handleDownload} />
-                  ))}
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">
+                      Select Quality
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {qualities.map((quality) => (
+                        <button
+                          key={quality}
+                          onClick={() => setSelectedQuality(quality)}
+                          className={cn(
+                            "px-4 py-2 rounded-full border text-xs font-black uppercase transition-all",
+                            selectedQuality === quality
+                              ? "bg-white text-black border-white"
+                              : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white"
+                          )}
+                        >
+                          {quality}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {visibleDownloads.map((item, idx) => (
+                      <DownloadCard key={`${item.quality}-${item.url}-${idx}`} item={item} onDownload={handleDownload} />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -105,7 +141,7 @@ export default function DownloadModal({
             <div className="p-4 bg-white/5 text-center">
               <p className="text-[10px] text-white/30 uppercase font-black tracking-widest flex items-center justify-center gap-2">
                 <ShieldCheck size={12} />
-                Secure direct links provided by Vyla
+                Direct links from the configured downloads provider
               </p>
             </div>
           </motion.div>
@@ -151,4 +187,21 @@ function DownloadCard({ item, onDownload }: { item: DownloadItem, onDownload: (u
       </button>
     </motion.div>
   );
+}
+
+function getQualities(downloads: DownloadItem[]): string[] {
+  const unique = Array.from(new Set(downloads.map((item) => item.quality).filter(Boolean)));
+  return unique.sort((a, b) => qualityRank(b) - qualityRank(a));
+}
+
+function qualityRank(quality: string): number {
+  const numeric = Number(quality.match(/\d+/)?.[0] || 0);
+  if (numeric) return numeric;
+
+  const normalized = quality.toUpperCase();
+  if (normalized.includes('UHD') || normalized.includes('4K')) return 2160;
+  if (normalized.includes('FHD')) return 1080;
+  if (normalized.includes('HD')) return 720;
+  if (normalized.includes('SD')) return 480;
+  return 0;
 }

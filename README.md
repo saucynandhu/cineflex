@@ -12,6 +12,7 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 - **Intelligent Lazy Loading**: Optimized performance with rows that only fetch data when visible.
 - **Mouse Wheel Navigation**: Intuitive horizontal scrolling for media rows using your mouse wheel.
 - **Source Switcher**: Easily switch between video providers if one source is unavailable.
+- **Quality-Aware Downloads**: Optional download modal with selectable quality levels from your configured authorized downloads provider.
 - **Detailed Metadata**: Full detail pages with cast, ratings, release years, and descriptions.
 - **Embedded Video Player**: Integrated player with multiple source options for reliable streaming.
 - **Responsive Dark UI**: A fully responsive, Netflix-inspired dark theme optimized for all devices.
@@ -50,6 +51,7 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
    Create a `.env` file in the root directory and add your TMDB API key:
    ```env
    VITE_TMDB_API_KEY=your_tmdb_api_key
+   VITE_DOWNLOADS_API_URL=https://your-domain.example/api/downloads
    ```
    *Note: You can get a free API key by signing up at [TheMovieDB.org](https://www.themoviedb.org/settings/api).*
 
@@ -65,6 +67,26 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `VITE_TMDB_API_KEY` | Your TMDB API Key for fetching metadata. | Yes |
+| `VITE_DOWNLOADS_API_URL` | Optional authorized downloads API. Supports a REST base URL ending in `/movie/:tmdbId` and `/tv/:tmdbId/:season/:episode`, or a template URL using `{type}`, `{tmdbId}`, `{season}`, and `{episode}`. | No |
+
+### Downloads API Response
+The downloads modal expects your provider to return one of these shapes:
+
+```json
+{
+  "downloads": [
+    {
+      "url": "https://cdn.example.com/movie-1080p.mp4",
+      "quality": "1080p",
+      "size": "2.4 GB",
+      "format": "MP4",
+      "server": "Main"
+    }
+  ]
+}
+```
+
+Arrays are also supported directly, and `link`, `href`, `resolution`, `fileSize`, and `type` are accepted as aliases.
 
 ## Project Structure
 ```

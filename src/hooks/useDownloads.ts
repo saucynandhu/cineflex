@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  buildDownloadRequestUrl,
+  normalizeDownloadsResponse,
+  DownloadItem,
+  DownloadsResponse
+} from '../lib/downloads';
 
-export interface DownloadItem {
-  url: string;
-  quality: string;
-  size: string | null;
-  format: string;
-  server?: string;
-}
+export type { DownloadItem, DownloadsResponse } from '../lib/downloads';
 
-export interface DownloadsResponse {
-  downloads: DownloadItem[];
-}
-
-const BASE_URL = 'https://missourimonster-vyla.hf.space';
+const DOWNLOADS_API_URL = import.meta.env.VITE_DOWNLOADS_API_URL as string | undefined;
 
 export function useDownloads(tmdbId: string | number | undefined, mediaType: 'movie' | 'tv', season?: number, episode?: number) {
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
@@ -27,18 +23,25 @@ export function useDownloads(tmdbId: string | number | undefined, mediaType: 'mo
       setLoading(true);
       setError(null);
       try {
-        let url = '';
-        if (mediaType === 'movie') {
-          url = `${BASE_URL}/api/downloads/movie/${tmdbId}`;
-        } else if (season !== undefined && episode !== undefined) {
-          // Following REST pattern for TV as well
-          url = `${BASE_URL}/api/downloads/tv/${tmdbId}/${season}/${episode}`;
-        } else {
-          return; // TV requires season and episode
+        const url = buildDownloadRequestUrl(DOWNLOADS_API_URL, {
+          tmdbId,
+          mediaType,
+          season,
+          episode,
+        });
+
+        if (!url) {
+          setDownloads([]);
+          setError(
+            mediaType === 'tv' && (season === undefined || episode === undefined)
+              ? 'Choose an episode before downloading.'
+              : 'Downloads are not configured for this app yet.'
+          );
+          return;
         }
 
         const response = await axios.get<DownloadsResponse>(url);
-        setDownloads(response.data.downloads || []);
+        setDownloads(normalizeDownloadsResponse(response.data).downloads);
       } catch (err) {
         console.error('Failed to fetch downloads:', err);
         setError('Failed to load download options. Please try again later.');
