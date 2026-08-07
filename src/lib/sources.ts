@@ -1,6 +1,7 @@
 export type SourceId = 
   | 'vidfast'
   | 'vidsrc_me' 
+  | 'vidking'
   | 'vidsrc_cc' 
   | 'twoembed' 
   | 'superembed';
@@ -12,6 +13,7 @@ export interface Source {
 
 export const SOURCES: Source[] = [
   { id: 'vidsrc_me', name: 'VidSrc.me' },
+  { id: 'vidking', name: 'VidKing' },
   { id: 'vidfast', name: 'VidFast' },
   { id: 'vidsrc_cc', name: 'VidSrc.cc' },
   { id: 'twoembed', name: '2Embed' },
@@ -36,6 +38,10 @@ export const getEmbedUrl = (
     vidsrc_me: {
       movie: `https://vidsrc.me/embed/movie/${tmdbId}`,
       tv: `https://vidsrc.me/embed/tv/${tmdbId}/${s}/${e}`
+    },
+    vidking: {
+      movie: `https://www.vidking.net/embed/movie/${tmdbId}?color=E50914`,
+      tv: `https://www.vidking.net/embed/tv/${tmdbId}/${s}/${e}?color=E50914`
     },
     vidsrc_cc: {
       movie: `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,

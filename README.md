@@ -70,10 +70,13 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 The watch page defaults to VidSrc.me and keeps only providers that are currently supported in the source switcher:
 
 - VidSrc.me
+- VidKing, themed with the Cineflex red player color
 - VidFast
 - VidSrc.cc
 - 2Embed
 - SuperEmbed
+
+The watch-page top bar intentionally omits the media title because several embedded players show their own title inside the iframe.
 
 ## Project Structure
 ```

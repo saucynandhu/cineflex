@@ -177,12 +177,12 @@ export default function Donate() {
                <div className="p-8 bg-[#E50914] rounded-3xl shadow-[0_20px_40px_rgba(229,9,20,0.2)]">
                   <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-2">Current Version</h4>
                   <div className="flex items-end gap-2">
-                    <span className="text-5xl font-black">2.4.1</span>
+                    <span className="text-5xl font-black">2.4.3</span>
                     <span className="mb-2 font-bold opacity-80">STABLE</span>
                   </div>
                   <div className="mt-4 flex items-center gap-2 text-sm font-bold">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    VidSrc.me is the default player.
+                    Cleaner watch controls.
                   </div>
                </div>
             </div>

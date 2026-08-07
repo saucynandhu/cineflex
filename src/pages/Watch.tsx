@@ -158,16 +158,7 @@ export default function Watch({ type }: WatchProps) {
           <span className="hidden sm:inline">Back to Details</span>
         </button>
 
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-white font-semibold text-xs md:text-sm leading-tight line-clamp-1 max-w-[200px] md:max-w-md">
-            {mediaData?.title || mediaData?.name}
-          </h1>
-          {type === 'tv' && (
-            <p className="text-white/60 text-[10px] font-medium mt-0.5">
-              Season {season} · Episode {episode}
-            </p>
-          )}
-        </div>
+        <div className="flex-1" />
 
         <div>
            <select

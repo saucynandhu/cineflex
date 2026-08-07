@@ -67,7 +67,7 @@ export default function Ads() {
               </h2>
               <div className="space-y-6 text-gray-300 text-lg leading-relaxed">
                 <p>
-                  Cineflex itself is <span className="text-white font-bold underline decoration-red-600 decoration-2">100% ad-free</span>. However, the video players you interact with are hosted by third-party providers such as VidSrc.me, VidFast, 2Embed, and SuperEmbed.
+                  Cineflex itself is <span className="text-white font-bold underline decoration-red-600 decoration-2">100% ad-free</span>. However, the video players you interact with are hosted by third-party providers such as VidSrc.me, VidKing, VidFast, 2Embed, and SuperEmbed.
                 </p>
                 <p>
                   Due to a security browser feature called the <span className="text-white font-bold">Same-Origin Policy</span>, we are technically blocked from modifying anything inside the video player's frame. We cannot "reach in" to hide their ads or stop their popups.

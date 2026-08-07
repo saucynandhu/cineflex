@@ -3,14 +3,17 @@
 ## [2026-08-07] — Source Provider Cleanup
 ### Changes Made:
 - Set VidSrc.me as the default watch-page video source.
+- Added VidKing as the second video source option.
+- Themed VidKing embeds with the Cineflex red player color.
 - Removed broken providers from the source switcher: VidLink, AutoEmbed, AutoEmbed.co, VidSrc.icu, VidSrc.vip, Rivestream, and Pstream.
+- Removed the Cineflex watch-page title from the top bar to avoid duplicating titles shown inside embedded players.
 - Updated source tests to match the current provider list.
 - Updated README provider documentation and the Donate page version badge.
 
 ### Files Modified:
 - README.md — Documented the current supported video providers.
 - src/lib/sources.ts — Removed broken source IDs, dropdown entries, and embed URL patterns.
-- src/pages/Watch.tsx — Changed the default player source to VidSrc.me.
+- src/pages/Watch.tsx — Changed the default player source to VidSrc.me and removed the redundant top-bar media title.
 - src/lib/sources.test.ts — Updated source tests for the current provider behavior.
 - src/pages/Donate.tsx — Bumped the displayed stable version.
 
