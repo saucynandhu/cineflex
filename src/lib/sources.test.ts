@@ -1,16 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getEmbedUrl } from './sources';
+import { getEmbedUrl, SOURCES } from './sources';
 
 describe('sources.ts', () => {
   describe('getEmbedUrl', () => {
-    it('generates correct movie URL for videasy', () => {
-      const url = getEmbedUrl('videasy', 'movie', 123);
-      expect(url).toBe('https://player.videasy.net/movie/123');
-    });
-
-    it('generates correct tv URL for videasy', () => {
-      const url = getEmbedUrl('videasy', 'tv', 123, 1, 5);
-      expect(url).toBe('https://player.videasy.net/tv/123/1/5');
+    it('uses VidSrc.me as the first source', () => {
+      expect(SOURCES[0]).toEqual({ id: 'vidsrc_me', name: 'VidSrc.me' });
     });
 
     it('generates correct movie URL for vidsrc.me', () => {
@@ -24,8 +18,8 @@ describe('sources.ts', () => {
     });
 
     it('uses defaults for season and episode if not provided', () => {
-      const url = getEmbedUrl('videasy', 'tv', 123);
-      expect(url).toBe('https://player.videasy.net/tv/123/1/1');
+      const url = getEmbedUrl('vidsrc_me', 'tv', 123);
+      expect(url).toBe('https://vidsrc.me/embed/tv/123/1/1');
     });
   });
 });

@@ -1,5 +1,25 @@
 # Cineflex — Change Log
 
+## [2026-08-07] — Source Provider Cleanup
+### Changes Made:
+- Set VidSrc.me as the default watch-page video source.
+- Removed broken providers from the source switcher: VidLink, AutoEmbed, AutoEmbed.co, VidSrc.icu, VidSrc.vip, Rivestream, and Pstream.
+- Updated source tests to match the current provider list.
+- Updated README provider documentation and the Donate page version badge.
+
+### Files Modified:
+- README.md — Documented the current supported video providers.
+- src/lib/sources.ts — Removed broken source IDs, dropdown entries, and embed URL patterns.
+- src/pages/Watch.tsx — Changed the default player source to VidSrc.me.
+- src/lib/sources.test.ts — Updated source tests for the current provider behavior.
+- src/pages/Donate.tsx — Bumped the displayed stable version.
+
+### Known Issues / Left To Do:
+- Third-party embed availability can still change outside of Cineflex control.
+
+### Branch:
+- main
+
 ## [2026-05-20] — Session Summary
 ### Changes Made:
 - Created `DESIGN_SYSTEM.md` in the project root, providing full documentation of the Cineflex visual identity, color palette, typography, components, and layout rules.

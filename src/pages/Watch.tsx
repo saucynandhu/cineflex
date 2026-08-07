@@ -15,7 +15,7 @@ interface WatchProps {
 export default function Watch({ type }: WatchProps) {
   const { id, season, episode } = useParams();
   const navigate = useNavigate();
-  const [source, setSource] = useState<SourceId>('vidlink');
+  const [source, setSource] = useState<SourceId>('vidsrc_me');
   const [mediaData, setMediaData] = useState<MediaDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isIframeLoading, setIsIframeLoading] = useState(true);

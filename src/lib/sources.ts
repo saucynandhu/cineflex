@@ -1,16 +1,9 @@
 export type SourceId = 
-  | 'vidlink' 
   | 'vidfast'
-  | 'autoembed'
   | 'vidsrc_me' 
   | 'vidsrc_cc' 
-  | 'vidsrc_icu' 
-  | 'vidsrc_vip'
-  | 'rivestream'
-  | 'pstream'
   | 'twoembed' 
-  | 'superembed'
-  | 'autoembed_co';
+  | 'superembed';
 
 export interface Source {
   id: SourceId;
@@ -18,18 +11,11 @@ export interface Source {
 }
 
 export const SOURCES: Source[] = [
-  { id: 'vidlink', name: 'VidLink' },
-  { id: 'vidfast', name: 'VidFast' },
-  { id: 'autoembed', name: 'AutoEmbed' },
   { id: 'vidsrc_me', name: 'VidSrc.me' },
+  { id: 'vidfast', name: 'VidFast' },
   { id: 'vidsrc_cc', name: 'VidSrc.cc' },
-  { id: 'vidsrc_icu', name: 'VidSrc.icu' },
-  { id: 'vidsrc_vip', name: 'VidSrc.vip' },
-  { id: 'rivestream', name: 'Rivestream' },
-  { id: 'pstream', name: 'Pstream' },
   { id: 'twoembed', name: '2Embed' },
   { id: 'superembed', name: 'SuperEmbed' },
-  { id: 'autoembed_co', name: 'AutoEmbed.co' },
 ];
 
 export const getEmbedUrl = (
@@ -43,17 +29,9 @@ export const getEmbedUrl = (
   const e = episode || '1';
 
   const patterns: Record<SourceId, { movie: string; tv: string }> = {
-    vidlink: {
-      movie: `https://vidlink.pro/movie/${tmdbId}`,
-      tv: `https://vidlink.pro/tv/${tmdbId}/${s}/${e}`
-    },
     vidfast: {
       movie: `https://vidfast.pro/movie/${tmdbId}`,
       tv: `https://vidfast.pro/tv/${tmdbId}/${s}/${e}`
-    },
-    autoembed: {
-      movie: `https://player.autoembed.cc/embed/movie/${tmdbId}`,
-      tv: `https://player.autoembed.cc/embed/tv/${tmdbId}/${s}/${e}`
     },
     vidsrc_me: {
       movie: `https://vidsrc.me/embed/movie/${tmdbId}`,
@@ -63,22 +41,6 @@ export const getEmbedUrl = (
       movie: `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,
       tv: `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${s}/${e}`
     },
-    vidsrc_icu: {
-      movie: `https://vidsrc.icu/embed/movie/${tmdbId}`,
-      tv: `https://vidsrc.icu/embed/tv/${tmdbId}/${s}/${e}`
-    },
-    vidsrc_vip: {
-      movie: `https://vidsrc.vip/embed/movie/${tmdbId}`,
-      tv: `https://vidsrc.vip/embed/tv/${tmdbId}/${s}/${e}`
-    },
-    rivestream: {
-      movie: `https://rivestream.org/embed/movie/${tmdbId}`,
-      tv: `https://rivestream.org/embed/tv/${tmdbId}/${s}/${e}`
-    },
-    pstream: {
-      movie: `https://iframe.pstream.org/movie/${tmdbId}`,
-      tv: `https://iframe.pstream.org/tv/${tmdbId}/${s}/${e}`
-    },
     twoembed: {
       movie: `https://www.2embed.cc/embed/${tmdbId}`,
       tv: `https://www.2embed.cc/embedtv/${tmdbId}&s=${s}&e=${e}`
@@ -86,10 +48,6 @@ export const getEmbedUrl = (
     superembed: {
       movie: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`,
       tv: `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${s}&e=${e}`
-    },
-    autoembed_co: {
-      movie: `https://autoembed.co/movie/tmdb/${tmdbId}`,
-      tv: `https://autoembed.co/tv/tmdb/${tmdbId}-${s}-${e}`
     }
   };
 

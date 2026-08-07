@@ -26,7 +26,7 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
 - **API**: The Movie Database (TMDB)
-- **Video Sources**: Multiple third-party providers including VidLink, VidSrc, etc.
+- **Video Sources**: Curated third-party provider list, with VidSrc.me as the default player.
 
 ## Getting Started
 
@@ -65,6 +65,15 @@ A personal Netflix-style streaming frontend built with React 19, Vite, and TMDB.
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `VITE_TMDB_API_KEY` | Your TMDB API Key for fetching metadata. | Yes |
+
+## Video Providers
+The watch page defaults to VidSrc.me and keeps only providers that are currently supported in the source switcher:
+
+- VidSrc.me
+- VidFast
+- VidSrc.cc
+- 2Embed
+- SuperEmbed
 
 ## Project Structure
 ```
