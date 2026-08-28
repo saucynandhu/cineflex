@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as tmdb from '../lib/tmdb';
-import { SourceId, SOURCES, getEmbedUrl } from '../lib/sources';
+import { SourceId, getEmbedUrl } from '../lib/sources';
+import SourceSwitcher from '../components/SourceSwitcher';
 import { useUserLists } from '../hooks/useUserLists';
 import { MediaDetails, Episode } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
@@ -46,7 +47,7 @@ export default function Watch({ type }: WatchProps) {
           title: details.title || details.name || '',
           posterPath: details.poster_path,
           backdropPath: details.backdrop_path,
-          year: ((details as any).release_date || (details as any).first_air_date || '').split('-')[0],
+          year: (details.release_date || details.first_air_date || '').split('-')[0],
           addedAt: Date.now()
         };
 
@@ -151,6 +152,7 @@ export default function Watch({ type }: WatchProps) {
       {/* Top Bar */}
       <div className="flex-none h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
         <button
+          type="button"
           onClick={() => navigate(`/${type}/${id}`)}
           className="flex items-center gap-2 text-white/70 hover:text-white transition-all font-bold uppercase tracking-widest text-[10px] md:text-xs"
         >
@@ -160,17 +162,7 @@ export default function Watch({ type }: WatchProps) {
 
         <div className="flex-1" />
 
-        <div>
-           <select
-             value={source}
-             onChange={(e) => setSource(e.target.value as SourceId)}
-             className="bg-transparent border border-white/30 text-white text-xs rounded-md px-3 py-1.5 outline-none cursor-pointer hover:border-white/50 transition-colors"
-           >
-             {SOURCES.map((src) => (
-               <option key={src.id} value={src.id} className="bg-[#141414]">{src.name}</option>
-             ))}
-           </select>
-        </div>
+        <SourceSwitcher activeSource={source} onSourceChange={setSource} />
       </div>
 
       {/* Iframe Area */}
@@ -210,6 +202,7 @@ export default function Watch({ type }: WatchProps) {
           <div className="flex items-center gap-4">
             {!isFirstEpisodeOfFirstSeason && (
               <button
+                type="button"
                 onClick={handlePrev}
                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
               >
@@ -229,6 +222,7 @@ export default function Watch({ type }: WatchProps) {
           <div className="flex items-center gap-4">
             {!isLastEpisodeOfSeries && (
               <button
+                type="button"
                 onClick={handleNext}
                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
               >

@@ -15,6 +15,7 @@ export default function SourceSwitcher({ activeSource, onSourceChange }: SourceS
           value={activeSource}
           onChange={(e) => onSourceChange(e.target.value as SourceId)}
           className="bg-[#1a1a1a] text-white border-2 border-[#E50914] rounded px-3 py-2 outline-none cursor-pointer font-bold text-sm w-full md:w-auto"
+          aria-label="Video source"
         >
           {SOURCES.map((source) => (
             <option key={source.id} value={source.id}>

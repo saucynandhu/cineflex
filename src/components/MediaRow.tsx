@@ -3,11 +3,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MediaCard from './MediaCard';
 import SkeletonRow from './SkeletonRow';
 import { cn } from '../lib/utils';
+import { MediaBase, MediaCardItem } from '../types/tmdb';
 
 interface MediaRowProps {
   title: string;
-  items?: any[];
-  fetchFn?: () => Promise<any[]>;
+  items?: MediaCardItem[];
+  fetchFn?: () => Promise<MediaBase[]>;
   type?: 'movie' | 'tv' | 'all';
   listType?: 'continue_watching' | 'watch_later' | 'watched';
   onRemove?: (id: number, type: string) => void;
@@ -16,10 +17,11 @@ interface MediaRowProps {
 export default function MediaRow({ title, items: initialItems, fetchFn, type, listType, onRemove }: MediaRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [items, setItems] = useState<any[]>(initialItems || []);
+  const [items, setItems] = useState<MediaCardItem[]>(initialItems || []);
   const [loading, setLoading] = useState(!initialItems && !!fetchFn);
   const [hasLoaded, setHasLoaded] = useState(!!initialItems);
   const [showArrows, setShowArrows] = useState(false);
+  const [canScroll, setCanScroll] = useState(false);
 
   useEffect(() => {
     if (initialItems) {
@@ -77,6 +79,26 @@ export default function MediaRow({ title, items: initialItems, fetchFn, type, li
     }
   }, []);
 
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+
+    const updateCanScroll = () => {
+      setCanScroll(el.scrollWidth > el.clientWidth + 1);
+    };
+
+    updateCanScroll();
+
+    const observer = new ResizeObserver(updateCanScroll);
+    observer.observe(el);
+    window.addEventListener('resize', updateCanScroll);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateCanScroll);
+    };
+  }, [items]);
+
   if (!loading && hasLoaded && items.length === 0 && !initialItems) return null;
   
   if (loading && !hasLoaded) {
@@ -117,15 +139,20 @@ export default function MediaRow({ title, items: initialItems, fetchFn, type, li
         <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-[#141414] to-transparent z-10 pointer-events-none" />
 
         {/* Navigation Arrows */}
-        <button
-          onClick={() => scroll('left')}
-          className={cn(
-            "absolute left-0 top-0 bottom-0 w-10 md:w-12 bg-black/50 hover:bg-black/80 flex items-center justify-center z-20 transition-opacity duration-300 opacity-0 group-hover/section:opacity-100",
-            "hidden md:flex"
-          )}
-        >
-          <ChevronLeft size={32} className="text-white" />
-        </button>
+        {canScroll && (
+          <button
+            type="button"
+            aria-label={`Scroll ${title} left`}
+            onClick={() => scroll('left')}
+            className={cn(
+              "absolute left-0 top-0 bottom-0 w-10 md:w-12 bg-black/50 hover:bg-black/80 items-center justify-center z-20 transition-opacity duration-300",
+              "hidden md:flex",
+              showArrows ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <ChevronLeft size={32} className="text-white" />
+          </button>
+        )}
 
         <div
           ref={rowRef}
@@ -142,15 +169,20 @@ export default function MediaRow({ title, items: initialItems, fetchFn, type, li
           ))}
         </div>
 
-        <button
-          onClick={() => scroll('right')}
-          className={cn(
-            "absolute right-0 top-0 bottom-0 w-10 md:w-12 bg-black/50 hover:bg-black/80 flex items-center justify-center z-20 transition-opacity duration-300 opacity-0 group-hover/section:opacity-100",
-            "hidden md:flex"
-          )}
-        >
-          <ChevronRight size={32} className="text-white" />
-        </button>
+        {canScroll && (
+          <button
+            type="button"
+            aria-label={`Scroll ${title} right`}
+            onClick={() => scroll('right')}
+            className={cn(
+              "absolute right-0 top-0 bottom-0 w-10 md:w-12 bg-black/50 hover:bg-black/80 items-center justify-center z-20 transition-opacity duration-300",
+              "hidden md:flex",
+              showArrows ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <ChevronRight size={32} className="text-white" />
+          </button>
+        )}
       </div>
     </div>
   );

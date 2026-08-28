@@ -4,19 +4,19 @@ import MediaRow from '../components/MediaRow';
 import LoadingScreen from '../components/LoadingScreen';
 import * as tmdb from '../lib/tmdb';
 import { useUserLists } from '../hooks/useUserLists';
-import { Genre } from '../types/tmdb';
+import { Genre, MediaBase, MediaCardItem } from '../types/tmdb';
 
 interface SectionConfig {
   title: string;
-  fetchFn: () => Promise<any[]>;
-  type: 'movie' | 'tv' | 'all';
+  fetchFn: () => Promise<MediaBase[]>;
+  type: 'movie' | 'tv';
 }
 
 export default function Home() {
   const [genreMap, setGenreMap] = useState<Record<number, string>>({});
   const [loadingGenres, setLoadingGenres] = useState(true);
   const { continueWatching: initialCW, removeFromContinueWatching } = useUserLists();
-  const [cwItems, setCwItems] = useState<any[]>([]);
+  const [cwItems, setCwItems] = useState<MediaCardItem[]>([]);
   
   useEffect(() => {
     setCwItems(initialCW);
@@ -25,7 +25,7 @@ export default function Home() {
   const handleCWRemove = (id: number, type: string) => {
     removeFromContinueWatching(id, type as 'movie' | 'tv');
     setCwItems(prev => prev.filter(item => 
-      !( (Number(item.tmdbId) === Number(id) || Number(item.id) === Number(id)) && item.type === type )
+      !( (Number(item.id) === Number(id)) && ('type' in item ? item.type === type : item.media_type === type) )
     ));
   };
 

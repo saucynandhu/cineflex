@@ -63,8 +63,10 @@ export default function DownloadModal({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors"
+                aria-label="Close download options"
               >
                 <X size={24} />
               </button>
@@ -144,6 +146,7 @@ function DownloadCard({ item, onDownload }: { item: DownloadItem, onDownload: (u
       </div>
 
       <button
+        type="button"
         onClick={() => onDownload(item.url)}
         className="bg-white text-black px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-tight hover:bg-white/90 transition-all shadow-xl group-hover:scale-105 active:scale-95"
       >

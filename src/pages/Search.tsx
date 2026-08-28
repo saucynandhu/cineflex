@@ -5,6 +5,7 @@ import MediaCard from '../components/MediaCard';
 import SkeletonRow from '../components/SkeletonRow';
 import { Search as SearchIcon, X, Filter } from 'lucide-react';
 import { MediaBase, Genre } from '../types/tmdb';
+import ErrorMessage from '../components/ErrorMessage';
 import { cn } from '../lib/utils';
 import { AnimatePresence } from 'motion/react';
 
@@ -18,54 +19,71 @@ export default function Search() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   
   const loaderRef = useRef<HTMLDivElement>(null);
+  const searchRequestRef = useRef(0);
 
-  const fetchResults = useCallback(async (isNextPage = false) => {
+  const fetchResults = useCallback(async (targetPage = 1, append = false) => {
     if (!query) return;
     
-    const currentPage = isNextPage ? page + 1 : 1;
-    if (isNextPage) setLoadingMore(true);
+    const requestId = searchRequestRef.current + 1;
+    searchRequestRef.current = requestId;
+
+    if (append) setLoadingMore(true);
     else setLoading(true);
 
     try {
       let data;
       if (typeFilter === 'all') {
-        data = await tmdb.searchMulti(query, currentPage);
+        data = await tmdb.searchMulti(query, targetPage);
       } else {
-        data = await tmdb.searchType(typeFilter, query, currentPage);
+        data = await tmdb.searchType(typeFilter, query, targetPage);
       }
+
+      if (requestId !== searchRequestRef.current) return;
 
       const filtered = data.results.filter((item: MediaBase) => 
         (item.media_type as string) !== 'person' && 
         (item.poster_path || item.backdrop_path)
       );
 
-      if (isNextPage) {
+      if (append) {
         setResults(prev => [...prev, ...filtered]);
-        setPage(currentPage);
+        setPage(targetPage);
       } else {
         setResults(filtered);
         setPage(1);
         setTotalPages(data.total_pages);
       }
     } catch (err) {
-      console.error(err);
+      if (requestId !== searchRequestRef.current) return;
+      setError('Search failed. Please try again.');
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (requestId === searchRequestRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
-  }, [query, typeFilter, page]);
+  }, [query, typeFilter]);
 
   // Initial search or filter change
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (query) fetchResults(false);
-      else setResults([]);
+      if (query) {
+        fetchResults(1, false);
+      } else {
+        searchRequestRef.current += 1;
+        setResults([]);
+        setPage(1);
+        setTotalPages(1);
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [query, typeFilter]);
+  }, [query, typeFilter, fetchResults]);
 
   // Infinite scroll
   useEffect(() => {
@@ -73,7 +91,7 @@ export default function Search() {
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        fetchResults(true);
+        fetchResults(page + 1, true);
       }
     }, { threshold: 0.1 });
 
@@ -110,20 +128,24 @@ export default function Search() {
           <div className="flex items-center gap-2 mr-4">
             {query && (
               <button 
+                type="button"
                 onClick={() => setSearchParams({})} 
                 className="text-white/40 hover:text-white transition-colors p-1"
                 title="Clear search"
+                aria-label="Clear search"
               >
                 <X size={20} />
               </button>
             )}
             <button
+              type="button"
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 "p-2 rounded-full transition-all",
                 showFilters ? "bg-[#E50914] text-white" : "text-white/40 hover:text-white hover:bg-white/10"
               )}
               title="Filters"
+              aria-label={showFilters ? "Hide filters" : "Show filters"}
             >
               <Filter size={20} />
             </button>
@@ -138,6 +160,7 @@ export default function Search() {
                 <span className="text-xs font-bold text-white/40 uppercase tracking-widest mr-2">Type:</span>
                 {['all', 'movie', 'tv'].map((t) => (
                   <button
+                    type="button"
                     key={t}
                     onClick={() => handleTypeChange(t)}
                     className={cn(
@@ -156,7 +179,13 @@ export default function Search() {
         </AnimatePresence>
       </div>
 
-      {loading && results.length === 0 ? (
+      {error && results.length === 0 && (
+        <div className="mt-8">
+          <ErrorMessage message={error} onRetry={() => { setError(null); if (query) fetchResults(1, false); }} />
+        </div>
+      )}
+
+      {!error && loading && results.length === 0 ? (
         <div className="space-y-12">
           <SkeletonRow />
           <SkeletonRow />

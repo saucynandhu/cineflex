@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@700&family=Inter:wght@400;500;600;700;900&display=swap');
 
 :root {
   --netflix-red: #E50914;
@@ -239,7 +238,8 @@ body {
   pointer-events: auto;
 }
 
-.card:hover .card__action-row {
+.card:hover .card__action-row,
+.card:focus-within .card__action-row {
   opacity: 1;
 }
 
@@ -292,6 +292,12 @@ body {
   transform: scale(1.1);
 }
 
+@media (pointer: coarse) {
+  .card__action-row {
+    opacity: 1;
+  }
+}
+
 /* Upcoming Badge */
 .card__upcoming-badge {
   position: absolute;
@@ -313,4 +319,7 @@ body {
 }
 
 
-
+/* ═══ HERO SECTION — Suppress CSS transitions during hero slide changes ═══ */
+.hero-container * {
+  transition: none !important;
+}

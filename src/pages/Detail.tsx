@@ -6,9 +6,23 @@ import { Play, Plus, Star, Film, Check, X, Calendar, Download, Sparkles, Chevron
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { useUserLists } from '../hooks/useUserLists';
 import { cn, isUpcoming, formatDate } from '../lib/utils';
-import { MediaDetails, Season, Episode, MediaBase, Video } from '../types/tmdb';
+import { MediaDetails, Season, Episode, MediaBase, Video, DetailTab } from '../types/tmdb';
 import LoadingScreen from '../components/LoadingScreen';
+import ErrorMessage from '../components/ErrorMessage';
 import DownloadModal from '../components/DownloadModal';
+
+/** TMDB logo image object (not in the main types since it's only used here) */
+interface LogoImage {
+  iso_639_1: string;
+  file_path: string;
+}
+
+/** Collection response from TMDB /collection/{id} */
+interface Collection {
+  id: number;
+  name: string;
+  parts: MediaBase[];
+}
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, mins: number, secs: number } | null>(null);
@@ -54,8 +68,9 @@ export default function Detail({ type }: DetailProps) {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [collection, setCollection] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'more'>(
+  const [error, setError] = useState<string | null>(null);
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [activeTab, setActiveTab] = useState<DetailTab>(
     type === 'tv' ? 'episodes' : 'overview'
   );
   
@@ -75,7 +90,7 @@ export default function Detail({ type }: DetailProps) {
   const { isInWatchLater, toggleWatchLater, continueWatching, watched } = useUserLists();
   const cwItem = continueWatching.find(i => String(i.tmdbId || i.id) === String(id));
   
-  const releaseDate = data ? (data as any).release_date || (data as any).first_air_date : undefined;
+  const releaseDate = data ? (data.release_date || data.first_air_date) : undefined;
   const upcoming = isUpcoming(releaseDate);
 
   useEffect(() => {
@@ -93,12 +108,12 @@ export default function Detail({ type }: DetailProps) {
         setData(details);
 
         // Find Official Logo
-        const logo = images.logos?.find((l: any) => l.iso_639_1 === 'en') || images.logos?.[0];
+        const logo = images.logos?.find((l: LogoImage) => l.iso_639_1 === 'en') || images.logos?.[0];
         if (logo) setLogoUrl(`https://image.tmdb.org/t/p/original${logo.file_path}`);
 
         // Find Trailer
         const videos = details.videos?.results || [];
-        const t = videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Trailer' && (v as any).official) 
+        const t = videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Trailer' && v.official) 
                  || videos.find((v: Video) => v.site === 'YouTube' && v.type === 'Trailer');
         setTrailer(t || null);
 
@@ -106,12 +121,13 @@ export default function Detail({ type }: DetailProps) {
           setSeasons(details.seasons.filter((s: Season) => s.season_number > 0));
         }
 
-        if (type === 'movie' && (details as any).belongs_to_collection) {
-          const collectionData = await tmdb.getCollection((details as any).belongs_to_collection.id);
+        if (type === 'movie' && details.belongs_to_collection) {
+          const collectionData = await tmdb.getCollection(details.belongs_to_collection.id);
           setCollection(collectionData);
         }
       } catch (err) {
         console.error(err);
+        setError('Failed to load details. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -126,7 +142,7 @@ export default function Detail({ type }: DetailProps) {
           const eps = await tmdb.getEpisodes(id, selectedSeason);
           setEpisodes(eps);
         } catch (err) {
-          console.error(err);
+          console.error('Failed to load episodes:', err);
         }
       }
     }
@@ -157,9 +173,16 @@ export default function Detail({ type }: DetailProps) {
     }
   };
 
-  if (loading || !data) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />;
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-[#141414] flex items-center justify-center">
+        <ErrorMessage message={error || 'Failed to load details.'} onRetry={() => { setError(null); setLoading(true); }} />
+      </div>
+    );
+  }
 
-  const year = ((data as any).release_date || (data as any).first_air_date || '').split('-')[0];
+  const year = (data.release_date || data.first_air_date || '').split('-')[0];
   const runtime = type === 'movie' 
     ? `${Math.floor((data.runtime || 0) / 60)}h ${(data.runtime || 0) % 60}m` 
     : `${data.number_of_seasons} Seasons`;
@@ -296,8 +319,10 @@ export default function Detail({ type }: DetailProps) {
                 <div className="absolute bottom-0 left-0 w-full h-4 md:h-8 bg-gradient-to-t from-[#141414]/20 to-transparent pointer-events-none" />
               )}
               <button 
+                type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="mt-1 md:mt-2 text-white/60 hover:text-white flex items-center gap-1 text-[10px] md:text-sm font-bold uppercase tracking-widest transition-colors"
+                aria-label={isExpanded ? "Collapse overview" : "Expand overview"}
               >
                 {isExpanded ? (
                   <>Less <ChevronUp size={14} /></>
@@ -321,6 +346,7 @@ export default function Detail({ type }: DetailProps) {
                   </div>
                 ) : (
                   <button 
+                    type="button"
                     onClick={handlePlay}
                     className="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-full font-black text-sm md:text-lg hover:bg-white/90 transition-all flex items-center gap-2 md:gap-3 shadow-xl hover:scale-105"
                   >
@@ -329,6 +355,7 @@ export default function Detail({ type }: DetailProps) {
                 )}
                 
                 <button 
+                type="button"
                 onClick={() => toggleWatchLater({ 
                   id: data.id, 
                   tmdbId: data.id, 
@@ -345,6 +372,7 @@ export default function Detail({ type }: DetailProps) {
               </button>
 
               <button 
+                type="button"
                 onClick={() => openDownload(
                   type === 'tv' ? (cwItem?.season || 1) : undefined, 
                   type === 'tv' ? (cwItem?.episode || 1) : undefined, 
@@ -352,6 +380,7 @@ export default function Detail({ type }: DetailProps) {
                 )}
                 className="glass-dark text-white p-3 md:p-4 rounded-full hover:bg-white/20 transition-all" 
                 title="Download"
+                aria-label="Download"
               >
                 <Download size={20} className="md:size-6" />
               </button>
@@ -365,12 +394,13 @@ export default function Detail({ type }: DetailProps) {
       <div className="relative z-20 max-w-7xl mx-auto px-6 md:px-12 -mt-10 md:-mt-16 pt-0 pb-20">
         <div className="flex gap-6 md:gap-8 border-b border-white/10 mb-8 md:mb-12 overflow-x-auto no-scrollbar">
           {(type === 'tv' 
-            ? ['episodes', 'overview', 'more'] 
-            : ['overview', 'more']
+            ? (['episodes', 'overview', 'more'] as const)
+            : (['overview', 'more'] as const)
           ).map((tab) => (
             <button
+              type="button"
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab)}
               className={cn(
                 "pb-3 md:pb-4 text-[10px] md:text-sm font-black uppercase tracking-widest transition-all border-b-[2px] md:border-b-[3px] whitespace-nowrap",
                 activeTab === tab ? "text-white border-[#E50914]" : "text-white/40 border-transparent hover:text-white"
@@ -422,9 +452,9 @@ export default function Detail({ type }: DetailProps) {
                     <h3 className="text-xl font-black text-white uppercase tracking-widest mb-8">{collection.name}</h3>
                     <div className="flex gap-6 overflow-x-auto no-scrollbar">
                       {collection.parts
-                        .filter((part: any) => part.poster_path)
-                        .sort((a: any, b: any) => (a.release_date || '').localeCompare(b.release_date || ''))
-                        .map((part: any) => {
+                        .filter((part) => part.poster_path)
+                        .sort((a, b) => (a.release_date || '').localeCompare(b.release_date || ''))
+                        .map((part) => {
                           const isCurrent = Number(part.id) === Number(id);
                           return (
                             <div 
@@ -441,7 +471,7 @@ export default function Detail({ type }: DetailProps) {
                               )}>
                                 <img 
                                   src={`https://image.tmdb.org/t/p/w400${part.poster_path}`} 
-                                  alt={part.title}
+                                  alt={part.title || part.name || ''}
                                   className="w-full h-full object-cover"
                                 />
                                 {isCurrent && (
@@ -450,7 +480,7 @@ export default function Detail({ type }: DetailProps) {
                                   </div>
                                 )}
                               </div>
-                              <p className="text-xs text-white font-bold mt-3 line-clamp-1">{part.title}</p>
+                              <p className="text-xs text-white font-bold mt-3 line-clamp-1">{part.title || part.name}</p>
                               <p className="text-[10px] text-white/40">{(part.release_date || '').split('-')[0]}</p>
                             </div>
                           );
@@ -517,19 +547,21 @@ export default function Detail({ type }: DetailProps) {
                                 "font-black text-2xl transition-colors",
                                 episodeUpcoming ? "text-white/40" : "text-white group-hover:text-[#E50914]"
                               )}>{ep.name}</h4>
-                              <span className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded uppercase tracking-tighter">{(ep as any).runtime || 45}m</span>
+                              <span className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded uppercase tracking-tighter">{ep.runtime || 45}m</span>
                               {episodeUpcoming && ep.air_date && (
                                 <span className="text-xs font-bold text-red-600 uppercase tracking-widest">{formatDate(ep.air_date)}</span>
                               )}
                             </div>
                             {!episodeUpcoming && (
                               <button 
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openDownload(selectedSeason, ep.episode_number, ep.name);
                                 }}
                                 className="glass-dark p-3 rounded-full hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                                 title="Download Episode"
+                                aria-label={`Download episode ${ep.episode_number}`}
                               >
                                 <Download size={18} />
                               </button>
@@ -570,7 +602,7 @@ export default function Detail({ type }: DetailProps) {
                         {item.title || item.name}
                       </p>
                       <p className="text-xs text-white/30 font-bold uppercase tracking-widest">
-                        {( (item as any).release_date || (item as any).first_air_date || '').split('-')[0]}
+                        {(item.release_date || item.first_air_date || '').split('-')[0]}
                       </p>
                     </div>
                   </div>

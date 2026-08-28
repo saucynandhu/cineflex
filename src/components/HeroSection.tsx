@@ -4,15 +4,24 @@ import { Play, Info } from 'lucide-react';
 import { getImageUrl, getTrending } from '../lib/tmdb';
 import { cn } from '../lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
+import { MediaBase } from '../types/tmdb';
 
 export default function HeroSection({ genreMap = {} }: { genreMap?: Record<number, string> }) {
-  const [movies, setMovies] = useState<any[]>([]);
+  const [movies, setMovies] = useState<MediaBase[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [nextIndex, setNextIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
   const transitionTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimer.current) {
+        window.clearTimeout(transitionTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchHeroMovies() {
@@ -42,17 +51,22 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
     setNextIndex(targetIndex);
     setIsTransitioning(true);
 
-    // Preload the image
-    const img = new Image();
-    img.src = getImageUrl(movies[targetIndex]?.backdrop_path, 'original');
-    img.onload = () => {
-      // Small delay to ensure browser is ready to render
+    const finishTransition = () => {
+      if (transitionTimer.current) {
+        window.clearTimeout(transitionTimer.current);
+      }
+
       transitionTimer.current = window.setTimeout(() => {
         setCurrentIndex(targetIndex);
         setNextIndex(null);
         setIsTransitioning(false);
       }, 50);
     };
+
+    const img = new Image();
+    img.src = getImageUrl(movies[targetIndex]?.backdrop_path, 'original');
+    img.onload = finishTransition;
+    img.onerror = finishTransition;
   };
 
   if (loading || movies.length === 0) {
@@ -61,7 +75,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
 
   const currentMovie = movies[currentIndex];
 
-  const handlePlay = (movie: any) => {
+  const handlePlay = (movie: MediaBase) => {
     const type = movie.media_type || (movie.first_air_date ? 'tv' : 'movie');
     if (type === 'movie') {
       navigate(`/watch/movie/${movie.id}`);
@@ -70,17 +84,13 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
     }
   };
 
-  const handleInfo = (movie: any) => {
+  const handleInfo = (movie: MediaBase) => {
     const type = movie.media_type || (movie.first_air_date ? 'tv' : 'movie');
     navigate(`/${type}/${movie.id}`);
   };
 
   return (
     <div className="relative h-[85vh] w-full overflow-hidden bg-[#141414] hero-container">
-      {/* Global CSS transition override for this container to prevent flicker */}
-      <style>{`
-        .hero-container * { transition: none !important; }
-      `}</style>
 
       <AnimatePresence initial={true}>
         <motion.div
@@ -134,6 +144,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
 
               <div className="flex items-center gap-4">
                 <button
+                  type="button"
                   onClick={() => handlePlay(currentMovie)}
                   className="flex items-center justify-center gap-3 bg-white text-black px-8 md:px-10 py-3 md:py-4 rounded-[4px] font-bold text-lg md:text-xl transition-all hover:bg-white/80 active:scale-95"
                 >
@@ -141,6 +152,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
                   Play
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleInfo(currentMovie)}
                   className="flex items-center justify-center gap-3 bg-[#6d6d6e]/70 text-white px-8 md:px-10 py-3 md:py-4 rounded-[4px] font-bold text-lg md:text-xl transition-all hover:bg-[#6d6d6e]/40 active:scale-95"
                 >
@@ -157,6 +169,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
         {movies.map((_, idx) => (
           <button
+            type="button"
             key={idx}
             onClick={() => triggerTransition(idx)}
             className={cn(
@@ -167,6 +180,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
               nextIndex === idx && "animate-pulse bg-white/50 w-8"
             )}
             title={idx === currentIndex ? "Current Slide" : `Go to slide ${idx + 1}`}
+            aria-label={idx === currentIndex ? "Current slide" : `Go to slide ${idx + 1}`}
           />
         ))}
       </div>

@@ -17,6 +17,7 @@ export default function Navbar() {
   const [isSurprising, setIsSurprising] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
+  const suggestionRequestRef = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -40,24 +41,34 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
+      suggestionRequestRef.current += 1;
       setSuggestions([]);
       setShowSuggestions(false);
+      setIsSearching(false);
       return;
     }
+
+    const requestId = suggestionRequestRef.current + 1;
+    suggestionRequestRef.current = requestId;
 
     const fetchSuggestions = async () => {
       setIsSearching(true);
       try {
         const { results } = await searchMulti(searchQuery);
+        if (requestId !== suggestionRequestRef.current) return;
+
         const filtered = results
           .filter(item => (item.media_type as string) !== 'person' && (item.poster_path || item.backdrop_path))
           .slice(0, 6);
         setSuggestions(filtered);
         setShowSuggestions(true);
       } catch (error) {
+        if (requestId !== suggestionRequestRef.current) return;
         console.error('Failed to fetch suggestions:', error);
       } finally {
-        setIsSearching(false);
+        if (requestId === suggestionRequestRef.current) {
+          setIsSearching(false);
+        }
       }
     };
 
@@ -96,7 +107,7 @@ export default function Navbar() {
       const results = await getTrending('all', 'week');
       if (results && results.length > 0) {
         const random = results[Math.floor(Math.random() * results.length)];
-        const type = random.media_type || ((random as any).first_air_date ? 'tv' : 'movie');
+        const type = random.media_type || (random.first_air_date ? 'tv' : 'movie');
         navigate(`/${type}/${random.id}`);
         setIsMobileMenuOpen(false);
       }
@@ -137,6 +148,7 @@ export default function Navbar() {
             ))}
             
             <button 
+              type="button"
               onClick={handleSurprise}
               disabled={isSurprising}
               className="border border-white/20 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ml-2"
@@ -149,8 +161,10 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 relative" ref={searchRef}>
             <button 
+              type="button"
               className="md:hidden text-white p-2 hover:bg-white/10 rounded-full transition-colors"
               onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Open menu"
             >
               <Menu size={24} />
             </button>
@@ -164,6 +178,7 @@ export default function Navbar() {
                   type="button"
                   onClick={() => setIsSearchExpanded(!isSearchExpanded)}
                   className="text-white flex-none transition-transform hover:scale-110"
+                  aria-label={isSearchExpanded ? "Collapse search" : "Expand search"}
                 >
                   <Search size={20} />
                 </button>
@@ -191,6 +206,7 @@ export default function Navbar() {
                       setSuggestions([]);
                     }}
                     className="text-white/40 hover:text-white transition-colors ml-1"
+                    aria-label="Clear search"
                   >
                     <X size={16} />
                   </button>
@@ -218,7 +234,7 @@ export default function Navbar() {
                       <button
                         key={item.id}
                         onClick={() => {
-                          const type = item.media_type || ((item as any).first_air_date ? 'tv' : 'movie');
+                          const type = item.media_type || (item.first_air_date ? 'tv' : 'movie');
                           navigate(`/${type}/${item.id}`);
                           setShowSuggestions(false);
                         }}
@@ -244,7 +260,7 @@ export default function Navbar() {
                             </span>
                             <span className="w-1 h-1 bg-white/20 rounded-full" />
                             <span className="text-[10px] text-white/40 font-bold">
-                              {((item as any).release_date || (item as any).first_air_date || '').split('-')[0]}
+                              {(item.release_date || item.first_air_date || '').split('-')[0]}
                             </span>
                           </div>
                         </div>
@@ -271,7 +287,7 @@ export default function Navbar() {
             </AnimatePresence>
           </div>
 
-          <Link to="/my-list" className="hidden md:flex w-10 h-10 items-center justify-center text-white hover:bg-white/10 rounded-full transition-all">
+          <Link to="/my-list" className="hidden md:flex w-10 h-10 items-center justify-center text-white hover:bg-white/10 rounded-full transition-all" aria-label="Open My List">
             <Bookmark size={20} />
           </Link>
 
@@ -293,7 +309,7 @@ export default function Navbar() {
           >
             <div className="flex items-center justify-between mb-8">
               <span className="text-[#E50914] text-2xl font-black uppercase tracking-tighter">Cineflex</span>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="text-white p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="text-white p-2 hover:bg-white/10 rounded-full transition-colors" aria-label="Close menu">
                 <X size={32} />
               </button>
             </div>
@@ -328,6 +344,7 @@ export default function Navbar() {
               </Link>
 
               <button 
+                type="button"
                 onClick={handleSurprise}
                 disabled={isSurprising}
                 className="w-full mt-6 bg-white text-black text-xl py-4 rounded font-black hover:bg-white/90 transition-all disabled:opacity-50 uppercase tracking-tight shadow-xl"
@@ -345,4 +362,3 @@ export default function Navbar() {
     </>
   );
 }
-

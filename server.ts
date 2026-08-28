@@ -1,3 +1,20 @@
+/**
+ * ⚠️  DEPRECATED / UNUSED
+ *
+ * This Express server is NOT wired into any npm script and is not used by
+ * the Vite dev server or production build.  The SPA calls TMDB directly
+ * through src/lib/tmdb.ts.
+ *
+ * It is kept here for potential future use (e.g., as a TMDB proxy to
+ * avoid exposing the API key in client-side builds).  To run it:
+ *
+ *   npx tsx server.ts
+ *
+ * The server exposes:
+ *   GET /health          — health check
+ *   GET /api/tmdb/*      — TMDB proxy (attaches API key server-side)
+ *   SPA fallback          — serves dist/ in production, Vite middleware in dev
+ */
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';

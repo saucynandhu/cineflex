@@ -15,6 +15,10 @@ export interface MediaBase {
   genre_ids: number[];
   popularity: number;
   media_type?: 'movie' | 'tv';
+  /** Present on movie results from mixed endpoints (trending, search) */
+  release_date?: string;
+  /** Present on TV results from mixed endpoints (trending, search) */
+  first_air_date?: string;
 }
 
 export interface Movie extends MediaBase {
@@ -40,6 +44,7 @@ export interface Episode {
   still_path: string;
   vote_average: number;
   vote_count: number;
+  runtime?: number;
 }
 
 export interface Season {
@@ -78,6 +83,12 @@ export interface MediaDetails extends MediaBase {
   runtime?: number;
   budget?: number;
   revenue?: number;
+  belongs_to_collection?: {
+    id: number;
+    name: string;
+    poster_path?: string;
+    backdrop_path?: string;
+  } | null;
 }
 
 export interface Cast {
@@ -103,6 +114,7 @@ export interface Video {
   site: string;
   size: number;
   type: string;
+  official?: boolean;
 }
 
 export interface ExternalIds {
@@ -111,3 +123,32 @@ export interface ExternalIds {
   instagram_id?: string | null;
   twitter_id?: string | null;
 }
+
+/**
+ * Shape of items stored in Zustand user lists (camelCase fields).
+ * Used by MediaCard when rendering continue-watching / watch-later rows.
+ */
+export interface StoredMediaItem {
+  id: number;
+  name?: string;
+  tmdbId: number;
+  type: 'movie' | 'tv';
+  title: string;
+  posterPath: string;
+  backdropPath?: string;
+  year: string;
+  addedAt: number;
+  season?: number;
+  episode?: number;
+  episodeName?: string;
+  watchedAt?: number;
+}
+
+/**
+ * Union type accepted by MediaCard — covers both TMDB API results
+ * (snake_case) and Zustand store items (camelCase).
+ */
+export type MediaCardItem = MediaBase | StoredMediaItem;
+
+/** Tab keys used on the Detail page */
+export type DetailTab = 'overview' | 'episodes' | 'more';
