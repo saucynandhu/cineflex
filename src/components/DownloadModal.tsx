@@ -12,6 +12,8 @@ interface DownloadModalProps {
   season?: number;
   episode?: number;
   episodeTitle?: string;
+  genres?: string[];
+  year?: number;
 }
 
 export default function DownloadModal({
@@ -22,9 +24,11 @@ export default function DownloadModal({
   title,
   season,
   episode,
-  episodeTitle
+  episodeTitle,
+  genres,
+  year,
 }: DownloadModalProps) {
-  const { downloads, loading, error } = useDownloads(tmdbId, mediaType, season, episode);
+  const { downloads, loading, error } = useDownloads(tmdbId, mediaType, season, episode, { genres, year });
 
   const handleDownload = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
@@ -107,7 +111,7 @@ export default function DownloadModal({
             <div className="p-4 bg-white/5 text-center">
               <p className="text-[10px] text-white/30 uppercase font-black tracking-widest flex items-center justify-center gap-2">
                 <ShieldCheck size={12} />
-                Secure direct links provided by Vyla
+                Secure direct links provided by Vyla & RapidAPI
               </p>
             </div>
           </motion.div>
@@ -137,7 +141,7 @@ function DownloadCard({ item, onDownload }: { item: DownloadItem, onDownload: (u
             </span>
             {item.server && (
               <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest ml-1">
-                Server {item.server}
+                {item.server}
               </span>
             )}
           </div>

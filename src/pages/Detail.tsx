@@ -624,6 +624,8 @@ export default function Detail({ type }: DetailProps) {
           season={downloadTarget?.season}
           episode={downloadTarget?.episode}
           episodeTitle={downloadTarget?.episodeTitle}
+          genres={data.genres?.map(g => g.name)}
+          year={year ? parseInt(year, 10) : undefined}
         />
       )}
     </div>

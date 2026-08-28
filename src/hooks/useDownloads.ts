@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { fetchRapidDownloads } from '../lib/downloads';
 
 export interface DownloadItem {
   url: string;
@@ -15,7 +16,18 @@ export interface DownloadsResponse {
 
 const BASE_URL = 'https://missourimonster-vyla.hf.space';
 
-export function useDownloads(tmdbId: string | number | undefined, mediaType: 'movie' | 'tv', season?: number, episode?: number) {
+export interface UseDownloadsOptions {
+  genres?: string[];
+  year?: number;
+}
+
+export function useDownloads(
+  tmdbId: string | number | undefined,
+  mediaType: 'movie' | 'tv',
+  season?: number,
+  episode?: number,
+  options?: UseDownloadsOptions,
+) {
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,32 +35,72 @@ export function useDownloads(tmdbId: string | number | undefined, mediaType: 'mo
   useEffect(() => {
     if (!tmdbId) return;
 
+    let cancelled = false;
+
     async function fetchDownloads() {
       setLoading(true);
       setError(null);
+
+      // 1️⃣ Try the primary Vyla API first
       try {
         let url = '';
         if (mediaType === 'movie') {
           url = `${BASE_URL}/api/downloads/movie/${tmdbId}`;
         } else if (season !== undefined && episode !== undefined) {
-          // Following REST pattern for TV as well
           url = `${BASE_URL}/api/downloads/tv/${tmdbId}/${season}/${episode}`;
-        } else {
-          return; // TV requires season and episode
         }
 
-        const response = await axios.get<DownloadsResponse>(url);
-        setDownloads(response.data.downloads || []);
-      } catch (err) {
-        console.error('Failed to fetch downloads:', err);
-        setError('Failed to load download options. Please try again later.');
+        if (url) {
+          const response = await axios.get<DownloadsResponse>(url, { timeout: 6000 });
+          if (!cancelled && response.data.downloads?.length) {
+            setDownloads(response.data.downloads);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Primary API failed — continue to fallback
+      }
+
+      // 2️⃣ Fallback: RapidAPI search by genre/year
+      if (!options?.genres?.length) {
+        if (!cancelled) {
+          setDownloads([]);
+          setError('No download links available for this title.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const rapidDownloads = await fetchRapidDownloads({
+          title: '', // Will be fuzzy-matched loosely; could pass title from Detail
+          genres: options.genres,
+          year: options.year,
+          type: mediaType,
+        });
+
+        if (!cancelled) {
+          if (rapidDownloads.length > 0) {
+            setDownloads(rapidDownloads);
+          } else {
+            setDownloads([]);
+            setError('No download links available for this title yet.');
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setDownloads([]);
+          setError('Failed to load download options. Please try again later.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchDownloads();
-  }, [tmdbId, mediaType, season, episode]);
+    return () => { cancelled = true; };
+  }, [tmdbId, mediaType, season, episode, options?.genres?.join(','), options?.year]);
 
   return { downloads, loading, error };
 }
