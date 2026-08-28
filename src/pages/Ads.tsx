@@ -42,10 +42,10 @@ export default function Ads() {
           >
             <ShieldAlert className="text-blue-500 w-10 h-10" />
           </motion.div>
-          <h1 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 sm:mb-8 tracking-tighter bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
             Ad Policy & Privacy
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed font-medium">
+          <p className="text-base sm:text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed font-medium">
             Understanding how third-party players handle ads and how you can reclaim your viewing experience.
           </p>
         </motion.div>
@@ -59,7 +59,7 @@ export default function Ads() {
             className="lg:col-span-3 space-y-10"
           >
             <section className="space-y-6">
-              <h2 className="text-3xl font-black flex items-center gap-4 text-white">
+              <h2 className="text-2xl sm:text-3xl font-black flex items-center gap-3 sm:gap-4 text-white">
                 <span className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center shadow-lg shadow-blue-600/20">
                   <Info size={24} className="text-white" />
                 </span>
@@ -107,7 +107,7 @@ export default function Ads() {
             className="lg:col-span-2 space-y-6"
           >
             {/* Adblocker Card */}
-            <div className="bg-[#181818] p-8 rounded-xl border border-white/10 shadow-2xl">
+            <div className="bg-[#181818] p-5 sm:p-8 rounded-xl border border-white/10 shadow-2xl">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
                 <ShieldCheck size={24} className="text-green-500" /> Recommended Fixes
               </h3>

@@ -123,8 +123,22 @@ body {
 .card {
   cursor: pointer;
   position: relative;
-  width: 240px;
-  flex: 0 0 240px;
+  width: 160px;
+  flex: 0 0 160px;
+}
+
+@media (min-width: 640px) {
+  .card {
+    width: 200px;
+    flex: 0 0 200px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    width: 240px;
+    flex: 0 0 240px;
+  }
 }
 
 .card__image-wrapper {

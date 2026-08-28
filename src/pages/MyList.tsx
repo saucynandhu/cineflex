@@ -20,7 +20,7 @@ export default function MyList() {
           ))}
         </div>
       ) : (
-        <div className="text-white/60 text-center py-20">
+        <div className="text-white/60 text-center py-20 text-sm sm:text-base">
           You haven't added anything to your list yet.
         </div>
       )}

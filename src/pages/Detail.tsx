@@ -391,7 +391,7 @@ export default function Detail({ type }: DetailProps) {
       </section>
 
       {/* Sections Below */}
-      <div className="relative z-20 max-w-7xl mx-auto px-6 md:px-12 -mt-10 md:-mt-16 pt-0 pb-20">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-12 -mt-10 md:-mt-16 pt-0 pb-20">
         <div className="flex gap-6 md:gap-8 border-b border-white/10 mb-8 md:mb-12 overflow-x-auto no-scrollbar">
           {(type === 'tv' 
             ? (['episodes', 'overview', 'more'] as const)
@@ -424,7 +424,7 @@ export default function Detail({ type }: DetailProps) {
               <div className="space-y-16">
                 <div className="space-y-8">
                   <h3 className="text-xl font-black text-white uppercase tracking-widest border-l-4 border-[#E50914] pl-4">Top Cast</h3>
-                  <div className="flex gap-8 overflow-x-auto no-scrollbar pb-6">
+                  <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-6">
                     {data.credits.cast.slice(0, 15).map((person) => (
                       <div key={person.id} className="flex-none w-24 text-center space-y-3">
                         <div className="relative group aspect-square rounded-full overflow-hidden border-2 border-white/5 hover:border-[#E50914] transition-all">
@@ -503,7 +503,7 @@ export default function Detail({ type }: DetailProps) {
                      {seasons.map(s => <option key={s.id} value={s.season_number} className="bg-[#181818]">Season {s.season_number}</option>)}
                    </select>
                  </div>
-                 <div className="grid grid-cols-1 gap-4">
+                 <div className="grid grid-cols-1 gap-3 md:gap-4">
                    {episodes.map(ep => {
                      const episodeWatched = isEpisodeWatched(selectedSeason, ep.episode_number);
                      const episodeUpcoming = isUpcoming(ep.air_date);
@@ -512,7 +512,7 @@ export default function Detail({ type }: DetailProps) {
                          key={ep.id}
                          onClick={() => !episodeUpcoming && navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)}
                          className={cn(
-                           "flex flex-col md:flex-row gap-8 p-6 rounded-2xl transition-all border border-white/5 hover:border-white/20 hover:bg-white/5 group",
+                           "flex flex-col md:flex-row gap-4 md:gap-8 p-4 md:p-6 rounded-2xl transition-all border border-white/5 hover:border-white/20 hover:bg-white/5 group",
                            episodeWatched && "bg-white/[0.02]",
                            !episodeUpcoming ? "cursor-pointer" : "cursor-default opacity-80"
                          )}
@@ -579,7 +579,7 @@ export default function Detail({ type }: DetailProps) {
             )}
 
             {activeTab === 'more' && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
                 {(data.recommendations?.results || []).slice(0, 12).map((item: MediaBase) => (
                   <div 
                     key={item.id}

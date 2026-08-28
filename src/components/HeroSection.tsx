@@ -119,13 +119,13 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
           </div>
 
           {/* Content Layer */}
-          <div className="absolute bottom-[20%] left-6 md:left-[60px] z-10 max-w-2xl">
+          <div className="absolute bottom-[12%] sm:bottom-[20%] left-4 sm:left-6 md:left-[60px] z-10 max-w-2xl">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
             >
-              <h1 className="text-4xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-[0.9] drop-shadow-2xl">
+              <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white mb-3 sm:mb-4 tracking-tighter leading-[0.9] drop-shadow-2xl">
                 {currentMovie?.title || currentMovie?.name}
               </h1>
 
@@ -138,7 +138,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
                 ))}
               </div>
 
-              <p className="text-base md:text-lg text-white/90 leading-snug mb-8 line-clamp-3 max-w-xl drop-shadow-md font-medium">
+              <p className="text-sm sm:text-base md:text-lg text-white/90 leading-snug mb-6 sm:mb-8 line-clamp-2 sm:line-clamp-3 max-w-xl drop-shadow-md font-medium">
                 {currentMovie?.overview}
               </p>
 
@@ -146,7 +146,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
                 <button
                   type="button"
                   onClick={() => handlePlay(currentMovie)}
-                  className="flex items-center justify-center gap-3 bg-white text-black px-8 md:px-10 py-3 md:py-4 rounded-[4px] font-bold text-lg md:text-xl transition-all hover:bg-white/80 active:scale-95"
+                  className="flex items-center justify-center gap-2 sm:gap-3 bg-white text-black px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 rounded-[4px] font-bold text-base sm:text-lg md:text-xl transition-all hover:bg-white/80 active:scale-95"
                 >
                   <Play size={24} fill="black" />
                   Play
@@ -154,7 +154,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
                 <button
                   type="button"
                   onClick={() => handleInfo(currentMovie)}
-                  className="flex items-center justify-center gap-3 bg-[#6d6d6e]/70 text-white px-8 md:px-10 py-3 md:py-4 rounded-[4px] font-bold text-lg md:text-xl transition-all hover:bg-[#6d6d6e]/40 active:scale-95"
+                  className="flex items-center justify-center gap-2 sm:gap-3 bg-[#6d6d6e]/70 text-white px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 rounded-[4px] font-bold text-base sm:text-lg md:text-xl transition-all hover:bg-[#6d6d6e]/40 active:scale-95"
                 >
                   <Info size={24} />
                   More Info
@@ -166,7 +166,7 @@ export default function HeroSection({ genreMap = {} }: { genreMap?: Record<numbe
       </AnimatePresence>
 
       {/* Dot Indicators */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 z-20">
         {movies.map((_, idx) => (
           <button
             type="button"

@@ -103,12 +103,12 @@ export default function BrowsePage({ type, sections: sectionConfigs, getGenres, 
   return (
     <div className="pb-20 bg-[#141414] pt-24">
       <div className="px-4 md:px-12 mb-8">
-        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-4">
+        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-4">
           <button
             type="button"
             onClick={() => setSelectedGenre(null)}
             className={cn(
-              "flex-none px-6 py-1.5 rounded-full text-sm font-bold border transition-all duration-200",
+              "flex-none px-4 sm:px-6 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition-all duration-200",
               selectedGenre === null ? "bg-white text-black border-white" : "text-white border-white/20 hover:border-white bg-transparent"
             )}
           >
@@ -120,7 +120,7 @@ export default function BrowsePage({ type, sections: sectionConfigs, getGenres, 
               key={genre.id}
               onClick={() => setSelectedGenre(prev => prev === genre.id ? null : genre.id)}
               className={cn(
-                "flex-none px-6 py-1.5 rounded-full text-sm font-bold border transition-all duration-200",
+                "flex-none px-4 sm:px-6 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition-all duration-200",
                 selectedGenre === genre.id ? "bg-white text-black border-white" : "text-white border-white/20 hover:border-white bg-transparent"
               )}
             >

@@ -150,7 +150,7 @@ export default function Watch({ type }: WatchProps) {
   return (
     <div className="h-screen w-screen flex flex-col bg-black overflow-hidden">
       {/* Top Bar */}
-      <div className="flex-none h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
+      <div className="flex-none h-14 sm:h-16 bg-gradient-to-b from-black/90 to-black/70 flex items-center justify-between px-3 sm:px-6 z-10">
         <button
           type="button"
           onClick={() => navigate(`/${type}/${id}`)}
@@ -198,13 +198,13 @@ export default function Watch({ type }: WatchProps) {
 
       {/* Bottom Bar (TV Only) */}
       {type === 'tv' && (
-        <div className="flex-none h-14 bg-gradient-to-t from-black/90 to-black/70 flex items-center justify-between px-6 z-10">
+        <div className="flex-none h-12 sm:h-14 bg-gradient-to-t from-black/90 to-black/70 flex items-center justify-between px-3 sm:px-6 z-10">
           <div className="flex items-center gap-4">
             {!isFirstEpisodeOfFirstSeason && (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 bg-white/10 hover:bg-white/20 text-white px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all"
               >
                 <ChevronLeft size={16} />
                 <span className="hidden sm:inline">Previous Episode</span>
@@ -224,7 +224,7 @@ export default function Watch({ type }: WatchProps) {
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 bg-white/10 hover:bg-white/20 text-white px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all"
               >
                 <span className="hidden sm:inline">Next Episode</span>
                 <ChevronRight size={16} />

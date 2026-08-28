@@ -56,7 +56,7 @@ export default function Donate() {
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-6xl md:text-8xl font-black mb-6 tracking-tighter"
+            className="text-4xl sm:text-6xl md:text-8xl font-black mb-4 sm:mb-6 tracking-tighter"
           >
             CINEFLEX <span className="text-red-600">LABS</span>
           </motion.h1>
@@ -65,7 +65,7 @@ export default function Donate() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-xl md:text-2xl text-gray-400 max-w-2xl font-medium leading-relaxed"
+            className="text-base sm:text-xl md:text-2xl text-gray-400 max-w-2xl font-medium leading-relaxed"
           >
             Engineering the future of private, open-source cinema. No trackers, no corporate bloat, just pure code.
           </motion.p>
@@ -116,7 +116,7 @@ export default function Donate() {
         </div>
 
         {/* Support Section */}
-        <div className="bg-gradient-to-br from-[#1c1c1c] to-[#141414] rounded-[3rem] p-12 md:p-20 border border-white/5 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#1c1c1c] to-[#141414] rounded-2xl sm:rounded-[3rem] p-6 sm:p-12 md:p-20 border border-white/5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/5 blur-[100px] rounded-full -mr-48 -mt-48" />
           
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -126,11 +126,11 @@ export default function Donate() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Support the Dev</span>
               </div>
               
-              <h2 className="text-4xl md:text-5xl font-black leading-tight">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-black leading-tight">
                 Help us keep the servers running and the code clean.
               </h2>
               
-              <div className="space-y-4 text-gray-400 text-lg">
+              <div className="space-y-4 text-gray-400 text-sm sm:text-lg">
                 <p className="flex flex-wrap items-baseline gap-x-2">
                   I'm a 
                   <span className="text-white font-mono font-bold bg-white/5 px-2 py-0.5 rounded border border-white/10 tabular-nums">
@@ -162,7 +162,7 @@ export default function Donate() {
             </div>
 
             <div className="space-y-6">
-               <div className="p-8 bg-black/40 rounded-3xl border border-white/5">
+               <div className="p-5 sm:p-8 bg-black/40 rounded-2xl sm:rounded-3xl border border-white/5">
                   <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-6">Built With</h4>
                   <div className="flex flex-wrap gap-3">
                     {techStack.map((tech, i) => (
@@ -174,7 +174,7 @@ export default function Donate() {
                   </div>
                </div>
 
-               <div className="p-8 bg-[#E50914] rounded-3xl shadow-[0_20px_40px_rgba(229,9,20,0.2)]">
+               <div className="p-5 sm:p-8 bg-[#E50914] rounded-2xl sm:rounded-3xl shadow-[0_20px_40px_rgba(229,9,20,0.2)]">
                   <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-2">Current Version</h4>
                   <div className="flex items-end gap-2">
                     <span className="text-5xl font-black">2.4.3</span>
@@ -190,7 +190,7 @@ export default function Donate() {
         </div>
 
         {/* Footer */}
-        <div className="mt-40 pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 opacity-40 hover:opacity-100 transition-opacity duration-500 pb-20">
+        <div className="mt-20 sm:mt-40 pt-8 sm:pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 opacity-40 hover:opacity-100 transition-opacity duration-500 pb-20">
           <div className="flex items-center gap-2">
             <span className="text-red-600 font-black text-xl tracking-tighter">CINEFLEX</span>
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Research Lab</span>
